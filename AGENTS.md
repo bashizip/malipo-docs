@@ -30,23 +30,19 @@ const shouldPrefix = locale && locale !== defaultLocale;
 const localizedSlug = shouldPrefix ? (slug ? locale + '/' + slug : locale) : slug;
 ```
 
-### Custom content loader — missing Starlight frontmatter defaults
+## Locale Configuration
 
-**File:** `src/content.config.ts`
+English uses `root` locale to keep URLs unprefixed (`/introduction/`). French uses `fr/` prefix (`/fr/introduction/`).
 
-**Problem:** The custom `malipo-loader` stored only raw YAML fields.
-Starlight expects defaulted fields (`head`, `template`, `pagefind`,
-`sidebar.hidden`, `draft`). Missing `head` causes a `hasOneOf` crash.
-
-**Fix:** Spread `frontmatter` over a defaults object inside the loader:
-
-```ts
-const defaultData = {
-  title: id, description: '', head: [], template: 'doc',
-  pagefind: true, draft: false, sidebar: { hidden: false },
-};
-store.set({ id, data: { ...defaultData, ...frontmatter }, ... });
+```js
+defaultLocale: 'root',
+locales: {
+    root: { label: 'English', lang: 'en' },
+    fr: { label: 'Français', lang: 'fr' },
+},
 ```
+
+This avoids Astro's i18n system from requiring `prefixDefaultLocale: true` (which would expect `/en/introduction/`), and avoids the need for patches to `filterByLocale` and `localizedSlug`.
 
 ## Documentation
 
@@ -56,7 +52,5 @@ Consult these guides before working on related tasks:
 
 - [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)
 - [Working with Astro components](https://docs.astro.build/en/basics/astro-components/)
-- [Using React, Vue, Svelte, or other framework components](https://docs.astro.build/en/guides/framework-components/)
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
-- [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)

@@ -16,13 +16,13 @@ export default defineConfig({
         alt: 'Malipo',
         replacesTitle: true,
       },
-      defaultLocale: 'en',
+      defaultLocale: 'root',
       locales: {
-        en: { label: 'English', lang: 'en' },
+        root: { label: 'English', lang: 'en' },
         fr: { label: 'Français', lang: 'fr' },
       },
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/malipo' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/malipo-docs' },
       ],
       sidebar: [
         {
