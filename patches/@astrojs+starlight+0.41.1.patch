@@ -1,0 +1,16 @@
+diff --git a/node_modules/@astrojs/starlight/utils/navigation.ts b/node_modules/@astrojs/starlight/utils/navigation.ts
+index 944c3ff..bfd88c8 100644
+--- a/node_modules/@astrojs/starlight/utils/navigation.ts
++++ b/node_modules/@astrojs/starlight/utils/navigation.ts
+@@ -141,7 +141,10 @@ function linkFromInternalSidebarLinkItem(
+ ) {
+ 	// Astro passes root `index.[md|mdx]` entries with a slug of `index`
+ 	const slug = item.slug === 'index' ? '' : item.slug;
+-	const localizedSlug = locale ? (slug ? locale + '/' + slug : locale) : slug;
++	// Don't prefix with locale for the default locale
++	const defaultLocale = config.defaultLocale?.locale;
++	const shouldPrefix = locale && locale !== defaultLocale;
++	const localizedSlug = shouldPrefix ? (slug ? locale + '/' + slug : locale) : slug;
+ 	const route = routes.find((entry) => localizedSlug === entry.id);
+ 	if (!route) {
+ 		const hasExternalSlashes = item.slug.at(0) === '/' || item.slug.at(-1) === '/';
