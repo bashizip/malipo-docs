@@ -1,0 +1,37 @@
+---
+title: Documentation Malipo
+draft: false
+description: Malipo est une passerelle de paiement mobile money pour la RDC.
+template: splash
+hero:
+  title: Documentation Malipo
+  tagline: Acceptez les paiements mobile money en RDC via une API unique. Vodacom M-Pesa, Orange Money et Airtel Money.
+  actions:
+    - text: Commencer
+      link: /fr/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: Voir sur GitHub
+      link: https://github.com/malipo
+      icon: external
+---
+
+import { CardGrid, Card } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Démarrage rapide" icon="rocket">
+    Commencez en quelques minutes avec votre première requête API.
+  </Card>
+  <Card title="Authentification" icon="lock">
+    Apprenez à authentifier vos requêtes API en toute sécurité.
+  </Card>
+  <Card title="SDKs & Bibliothèques" icon="setting">
+    Utilisez nos SDK officiels pour Node.js, Python, PHP, Java et Flutter.
+  </Card>
+  <Card title="Webhooks" icon="bell">
+    Recevez des notifications en temps réel pour les événements de paiement.
+  </Card>
+  <Card title="Passer en production" icon="globe">
+    Passez de l'environnement sandbox à la production.
+  </Card>
+</CardGrid>
