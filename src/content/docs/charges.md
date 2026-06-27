@@ -19,7 +19,7 @@ Initiates a mobile money payment request to the customer's phone.
 | `amount` | integer | Yes | Amount in the smallest currency unit (e.g., 1000 = 10.00 CDF) |
 | `currency` | string | Yes | ISO 4217 currency code: CDF or USD |
 | `phone` | string | Yes | Customer phone number in E.164 format (+243...) |
-| `network` | string | Yes | Mobile money network: airtel, vodacom, orange |
+| `network` | string | Yes | Mobile money network: AIRTEL_MONEY, VODACOM_MPESA, ORANGE_MONEY |
 | `description` | string | No | Optional description for the charge |
 | `metadata` | object | No | Custom key-value pairs for your reference |
 | `callback_url` | string | No | Override the default webhook URL for this charge |
@@ -34,7 +34,7 @@ curl -X POST https://api.malipo.dev/v1/charges \
     "amount": 1000,
     "currency": "CDF",
     "phone": "+243812345678",
-    "network": "airtel",
+    "network": "AIRTEL_MONEY",
     "description": "Order #1234",
     "metadata": { "order_id": "1234" }
   }'
@@ -49,7 +49,7 @@ curl -X POST https://api.malipo.dev/v1/charges \
   "amount": 1000,
   "currency": "CDF",
   "phone": "+243812345678",
-  "network": "airtel",
+  "network": "AIRTEL_MONEY",
   "status": "pending",
   "description": "Order #1234",
   "metadata": { "order_id": "1234" },

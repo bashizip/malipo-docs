@@ -22,7 +22,7 @@ curl -X POST https://api.malipo.dev/v1/charges \
     "amount": 1000,
     "currency": "CDF",
     "phone": "+243812345678",
-    "network": "airtel"
+    "network": "AIRTEL_MONEY"
   }'
 ```
 
@@ -45,7 +45,7 @@ const charge = await malipo.charges.create({
   amount: 1000,
   currency: "CDF",
   phone: "+243812345678",
-  network: "airtel"
+  network: "AIRTEL_MONEY"
 });
 ```
 
@@ -60,7 +60,7 @@ charge = malipo.Charge.create(
   amount=1000,
   currency="CDF",
   phone="+243812345678",
-  network="airtel"
+  network="AIRTEL_MONEY"
 )
 ```
 
@@ -74,6 +74,6 @@ curl -X POST https://api.malipo.dev/v1/charges \
     "amount": 1000,
     "currency": "CDF",
     "phone": "+243812345678",
-    "network": "airtel"
+    "network": "AIRTEL_MONEY"
   }'
 ```

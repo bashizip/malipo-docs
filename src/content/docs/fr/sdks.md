@@ -55,7 +55,7 @@ const charge = await malipo.charges.create({
   amount: 1000,
   currency: "CDF",
   phone: "+243812345678",
-  network: "airtel"
+  network: "AIRTEL_MONEY"
 });
 
 console.log(charge.id, charge.status);

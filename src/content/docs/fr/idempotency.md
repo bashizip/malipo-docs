@@ -30,7 +30,7 @@ curl -X POST https://api.malipo.dev/v1/charges \
     "amount": 1000,
     "currency": "CDF",
     "phone": "+243812345678",
-    "network": "airtel"
+    "network": "AIRTEL_MONEY"
   }'
 ```
 

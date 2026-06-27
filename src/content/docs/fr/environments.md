@@ -15,7 +15,7 @@ L'environnement sandbox vous permet de tester votre intégration sans traiter de
 | URL de base | `https://api.malipo.dev/v1` |
 | Préfixe clé API | `sk_test_...` |
 | URL webhook | Configurer dans le tableau de bord |
-| Réseaux de test | airtel, vodacom, orange |
+| Réseaux de test | AIRTEL_MONEY, VODACOM_MPESA, ORANGE_MONEY |
 
 ## Live
 
@@ -26,7 +26,7 @@ L'environnement live traite les vrais paiements. Nécessite KYC et activation li
 | URL de base | `https://api.malipo.dev/v1` |
 | Préfixe clé API | `sk_live_...` |
 | URL webhook | Configurer dans le tableau de bord |
-| Réseaux supportés | airtel, vodacom, orange (selon disponibilité) |
+| Réseaux supportés | AIRTEL_MONEY, VODACOM_MPESA, ORANGE_MONEY (selon disponibilité) |
 
 :::note
 Les deux environnements partagent la même URL de base. La clé API détermine l'environnement utilisé.
