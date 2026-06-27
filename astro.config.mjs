@@ -11,6 +11,11 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Malipo Docs',
+      logo: {
+        src: './src/assets/logo.png',
+        alt: 'Malipo',
+        replacesTitle: true,
+      },
       defaultLocale: 'en',
       locales: {
         en: { label: 'English', lang: 'en' },
