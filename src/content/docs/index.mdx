@@ -17,21 +17,22 @@ hero:
 ---
 
 import { CardGrid, Card } from '@astrojs/starlight/components';
+import LinkCard from '../../components/LinkCard.astro';
 
 <CardGrid>
-  <Card title="Quickstart" icon="rocket">
+  <LinkCard href="/quickstart/" title="Quickstart" icon="rocket">
     Get up and running in minutes with your first API request.
-  </Card>
-  <Card title="Authentication" icon="lock">
+  </LinkCard>
+  <LinkCard href="/authentication/" title="Authentication" icon="lock">
     Learn how to authenticate your API requests securely.
-  </Card>
-  <Card title="SDKs & Libraries" icon="setting">
+  </LinkCard>
+  <LinkCard href="/sdks/" title="SDKs & Libraries" icon="setting">
     Use our official SDKs for Node.js, Python, PHP, Java, and Flutter.
-  </Card>
-  <Card title="Webhooks" icon="bell">
+  </LinkCard>
+  <LinkCard href="/webhooks/" title="Webhooks" icon="bell">
     Receive real-time notifications for payment events.
-  </Card>
-  <Card title="Going Live" icon="globe">
+  </LinkCard>
+  <LinkCard href="/going-live/" title="Going Live" icon="globe">
     Move from sandbox to production environment.
-  </Card>
+  </LinkCard>
 </CardGrid>

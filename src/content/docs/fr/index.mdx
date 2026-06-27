@@ -16,22 +16,23 @@ hero:
       icon: external
 ---
 
-import { CardGrid, Card } from '@astrojs/starlight/components';
+import { CardGrid } from '@astrojs/starlight/components';
+import LinkCard from '../../../components/LinkCard.astro';
 
 <CardGrid>
-  <Card title="Démarrage rapide" icon="rocket">
+  <LinkCard href="/fr/quickstart/" title="Démarrage rapide" icon="rocket">
     Commencez en quelques minutes avec votre première requête API.
-  </Card>
-  <Card title="Authentification" icon="lock">
+  </LinkCard>
+  <LinkCard href="/fr/authentication/" title="Authentification" icon="lock">
     Apprenez à authentifier vos requêtes API en toute sécurité.
-  </Card>
-  <Card title="SDKs & Bibliothèques" icon="setting">
+  </LinkCard>
+  <LinkCard href="/fr/sdks/" title="SDKs & Bibliothèques" icon="setting">
     Utilisez nos SDK officiels pour Node.js, Python, PHP, Java et Flutter.
-  </Card>
-  <Card title="Webhooks" icon="bell">
+  </LinkCard>
+  <LinkCard href="/fr/webhooks/" title="Webhooks" icon="bell">
     Recevez des notifications en temps réel pour les événements de paiement.
-  </Card>
-  <Card title="Passer en production" icon="globe">
+  </LinkCard>
+  <LinkCard href="/fr/going-live/" title="Passer en production" icon="globe">
     Passez de l'environnement sandbox à la production.
-  </Card>
+  </LinkCard>
 </CardGrid>
