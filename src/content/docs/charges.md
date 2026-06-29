@@ -20,6 +20,7 @@ Initiates a mobile money payment request to the customer's phone.
 | `currency` | string | Yes | ISO 4217 currency code: CDF or USD |
 | `phone` | string | Yes | Customer phone number in E.164 format (+243...) |
 | `network` | string | Yes | Mobile money network: AIRTEL_MONEY, VODACOM_MPESA, ORANGE_MONEY |
+| `payment_method` | string | No | `mobile_money` by default. Use `card` to initiate a CyberSource hosted card payment. |
 | `description` | string | No | Optional description for the charge |
 | `metadata` | object | No | Custom key-value pairs for your reference |
 | `callback_url` | string | No | Override the default webhook URL for this charge |
@@ -55,6 +56,30 @@ curl -X POST https://api.malipo.dev/v1/charges \
   "metadata": { "order_id": "1234" },
   "created_at": "2025-01-15T10:30:00Z",
   "updated_at": "2025-01-15T10:30:00Z"
+}
+```
+
+### Card payments
+
+For card payments, send `payment_method: "card"` with a live USD charge. Malipo returns a pending charge plus a CyberSource hosted-payment action. Submit the returned `params` as hidden fields with `POST` to `next_action.payment_url`. Card details are entered only on the CyberSource hosted page.
+
+```json
+{
+  "id": "ch_1234567890",
+  "object": "charge",
+  "status": "pending",
+  "amount": 50,
+  "currency": "USD",
+  "payment_method": "card",
+  "next_action": {
+    "type": "cybersource_redirect",
+    "payment_url": "https://secureacceptance.cybersource.com/pay",
+    "params": {
+      "access_key": "...",
+      "profile_id": "...",
+      "signature": "..."
+    }
+  }
 }
 ```
 

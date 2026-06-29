@@ -43,6 +43,8 @@ Use Malipo's hosted checkout page for a pre-built payment experience.
 
 Send the customer to the `url` returned in the session. After payment, they'll be redirected to your `success_url` or `cancel_url`.
 
+Hosted checkout supports Mobile Money by default. For live USD sessions, customers can also choose card payment; Malipo redirects them to the CyberSource hosted card page and does not collect card numbers.
+
 ## Verify payment
 
 On your `success_url`, retrieve the session to verify payment status:
