@@ -43,19 +43,19 @@ Use Malipo's hosted checkout page for a pre-built payment experience.
 
 Send the customer to the `url` returned in the session. After payment, they'll be redirected to your `success_url` or `cancel_url`.
 
-Hosted checkout supports Mobile Money by default. For live USD sessions, customers can also choose card payment.
+Hosted checkout supports Mobile Money by default. For USD sessions, customers can also choose card payment when the matching QuickShare card rail via CyberSource is configured.
 
 ## Card Payment Flow
 
 When a customer chooses card payment:
 
 1. Malipo creates a pending card charge for the checkout session.
-2. Malipo redirects the customer's browser to the CyberSource hosted payment page using signed form fields.
+2. Malipo redirects the customer's browser to the CyberSource hosted payment page using signed form fields returned by QuickShare.
 3. The customer enters card details on CyberSource, not on Malipo.
 4. Malipo checks the provider status and updates the charge to `succeeded`, `failed`, or `declined`.
 5. The checkout page redirects back to the merchant return URL with the transaction result.
 
-Card payment is available only for live `USD` checkout sessions. If the session is sandbox or uses `CDF`, the checkout page shows Mobile Money only.
+Card payment is available only for `USD` checkout sessions. Sandbox card checkout is shown only when the sandbox QuickShare card rail returns a CyberSource sandbox/test hosted URL; `CDF` sessions show Mobile Money only.
 
 You can verify the final payment result with the transaction ID returned to your redirect URL, or by listening for Malipo webhook events.
 

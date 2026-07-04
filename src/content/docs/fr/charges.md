@@ -1,16 +1,16 @@
 ---
 title: Paiements
 draft: false
-description: Créez et gérez les paiements mobile money.
+description: Créez et gérez les paiements Mobile Money et carte.
 ---
 
-Créez et gérez les paiements mobile money.
+Créez et gérez les paiements Mobile Money et carte.
 
 ## Créer un paiement
 
 `POST /v1/charges`
 
-Initie une demande de paiement mobile money sur le téléphone du client.
+Initie une demande de paiement. Mobile Money envoie une demande sur le téléphone du client. Les paiements par carte créent une session carte QuickShare avec redirection vers la page de paiement hébergée CyberSource.
 
 ### Corps de la requête
 
@@ -20,6 +20,7 @@ Initie une demande de paiement mobile money sur le téléphone du client.
 | `currency` | chaîne | Oui | Code devise ISO 4217 : CDF ou USD |
 | `phone` | chaîne | Oui | Numéro de téléphone du client au format E.164 (+243...) |
 | `network` | string | Oui | Réseau mobile money : AIRTEL_MONEY, VODACOM_MPESA, ORANGE_MONEY |
+| `payment_method` | string | Non | `mobile_money` par défaut. Utilisez `card` pour le rail carte QuickShare via CyberSource. |
 | `description` | chaîne | Non | Description optionnelle du paiement |
 | `metadata` | objet | Non | Paires clé-valeur personnalisées |
 | `callback_url` | chaîne | Non | Remplacer l'URL webhook par défaut pour ce paiement |
@@ -57,6 +58,14 @@ curl -X POST https://api.malipo.dev/v1/charges \
   "updated_at": "2025-01-15T10:30:00Z"
 }
 ```
+
+## Paiement par carte
+
+Les paiements par carte utilisent le rail CyberSource exposé par QuickShare. Malipo crée et suit le paiement, mais les données carte sont saisies uniquement sur la page hébergée CyberSource.
+
+Pour créer une charge carte, envoyez `payment_method: "card"` avec `currency: "USD"`. La réponse contient `next_action.type = "cybersource_redirect"`, `payment_url`, et les champs signés à soumettre en `POST` vers CyberSource.
+
+N'envoyez jamais les numéros de carte, dates d'expiration, CVV ou OTP à Malipo. Les cartes de test CyberSource doivent être utilisées uniquement lorsque l'URL CyberSource retournée est une URL sandbox/test.
 
 ## Récupérer un paiement
 

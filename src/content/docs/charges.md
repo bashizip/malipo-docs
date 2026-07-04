@@ -10,7 +10,7 @@ Create and manage Mobile Money and card charges.
 
 `POST /v1/charges`
 
-Initiates a payment request. Mobile Money sends a prompt to the customer's phone. Card payments create a CyberSource hosted payment session.
+Initiates a payment request. Mobile Money sends a prompt to the customer's phone. Card payments create a QuickShare card session that redirects to the CyberSource hosted payment page.
 
 ### Request Body
 
@@ -61,11 +61,11 @@ curl -X POST https://api.malipo.dev/v1/charges \
 
 ## Card Payment Workflow
 
-Card payments use CyberSource Secure Acceptance. Malipo creates and tracks the payment, but card details are entered only on the CyberSource hosted page.
+Card payments use QuickShare's CyberSource rail. Malipo creates and tracks the payment, but card details are entered only on the CyberSource hosted page.
 
 ### 1. Create a card charge
 
-Card payments require a live API key and `USD`.
+Card payments require `USD`. In live mode, the merchant must be approved for live access and the QuickShare card rail must be enabled.
 
 ```bash
 curl -X POST https://api.malipo.dev/v1/charges \
@@ -146,7 +146,7 @@ Card charges use the same statuses as Mobile Money:
 
 - Do not send card numbers, expiry dates, or CVV values to Malipo.
 - Do not store the `next_action.params` as card data; they are signed CyberSource form fields for this payment attempt.
-- Use the test card details only when the returned CyberSource URL is a sandbox or test URL.
+- Use CyberSource test card details only when the returned CyberSource URL is a sandbox or test URL. See CyberSource's official testing guide for current test cards.
 - Use your webhook events or transaction retrieval to confirm payment before fulfilling an order.
 
 ## Retrieve a charge
