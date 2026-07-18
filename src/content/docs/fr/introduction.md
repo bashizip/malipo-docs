@@ -11,8 +11,8 @@ Malipo est une passerelle de paiement conçue spécialement pour la République 
 - **URL de base** : `https://api.malipo.dev/v1`
 - **Auth** : Bearer token (clé API secrète)
 - **Environnements** : Sandbox (test) et Live (production)
-- **Devises** : CDF et USD
-- **Paiements** : Règlement hebdomadaire sur votre compte bancaire
+- **Devise financière live** : USD
+- **Versements** : Transferts demandés par le marchand vers une destination Mobile Money approuvée
 
 ## Aperçu de l'API
 

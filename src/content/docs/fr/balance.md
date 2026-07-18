@@ -17,16 +17,14 @@ Retourne les soldes disponibles et en attente pour chaque devise.
 ```json
 {
   "available": [
-    { "currency": "CDF", "amount": 500000 },
     { "currency": "USD", "amount": 25000 }
   ],
   "pending": [
-    { "currency": "CDF", "amount": 100000 },
     { "currency": "USD", "amount": 5000 }
   ]
 }
 ```
 
 :::note
-En sandbox, le solde est simulé. Le solde live nécessite une configuration de paiement complétée.
+En sandbox, le solde est simulé. En live, le montant net d’un paiement réussi entre dans `pending`, puis devient `available` selon la politique de mise à disposition. Une destination de versement est nécessaire pour transférer les fonds disponibles.
 :::

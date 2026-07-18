@@ -18,8 +18,13 @@ Les webhooks vous permettent de recevoir des notifications HTTP POST lorsque cer
 | `charge.expired` | Un paiement a expiré avant complétion |
 | `charge.refunded` | Un paiement a été remboursé (total ou partiel) |
 | `checkout.session.completed` | Une session de paiement a été complétée |
+| `settlement.available` | Un lot de fonds est devenu disponible |
+| `payout.pending` | Une demande de versement a réservé les fonds |
+| `payout.processing` | Un versement est en traitement prestataire |
 | `payout.succeeded` | Un paiement a été complété avec succès |
 | `payout.failed` | Un paiement a échoué |
+| `payout.cancelled` | Un versement a été annulé avant envoi |
+| `payout.needs_review` | Le résultat prestataire exige une revue manuelle |
 
 ## Structure du payload
 

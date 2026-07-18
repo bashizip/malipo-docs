@@ -17,16 +17,14 @@ Returns the available and pending balances for each currency.
 ```json
 {
   "available": [
-    { "currency": "CDF", "amount": 500000 },
     { "currency": "USD", "amount": 25000 }
   ],
   "pending": [
-    { "currency": "CDF", "amount": 100000 },
     { "currency": "USD", "amount": 5000 }
   ]
 }
 ```
 
 :::note
-In sandbox, the balance is simulated. Live balance requires completed payout setup.
+In sandbox, the balance is simulated. In live mode, successful charge net amounts enter `pending`, then become `available` according to the settlement policy. Payout setup is required to transfer available funds.
 :::

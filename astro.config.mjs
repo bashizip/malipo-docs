@@ -11,6 +11,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Malipo Docs',
+      description: 'Guides d’intégration et d’exploitation pour les marchands Malipo.',
       logo: {
         src: './src/assets/logo.png',
         alt: 'Malipo',
@@ -24,6 +25,9 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/malipo-docs' },
       ],
+      favicon: '/favicon.svg',
+      customCss: ['./src/styles/custom.css'],
+      lastUpdated: true,
       sidebar: [
         {
           label: 'Getting started',
@@ -41,6 +45,9 @@ export default defineConfig({
             { label: 'Transaction status', slug: 'transaction-status' },
             { label: 'Refunds', slug: 'refunds' },
             { label: 'Balance', slug: 'balance' },
+            { label: 'Pricing', slug: 'pricing' },
+            { label: 'Settlements', slug: 'settlements' },
+            { label: 'Payouts', slug: 'payouts' },
             { label: 'Reporting', slug: 'reporting' },
             { label: 'Hosted checkout', slug: 'hosted-checkout' },
             { label: 'Idempotency', slug: 'idempotency' },
@@ -52,6 +59,7 @@ export default defineConfig({
             { label: 'Webhooks', slug: 'webhooks' },
             { label: 'Errors', slug: 'errors' },
             { label: 'Test scenarios', slug: 'test-scenarios' },
+            { label: 'Glossary', slug: 'glossary' },
           ],
         },
         {

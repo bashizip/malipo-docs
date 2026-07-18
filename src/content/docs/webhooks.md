@@ -18,8 +18,13 @@ Webhooks allow you to receive HTTP POST notifications whenever certain events ha
 | `charge.expired` | A charge expired before completion |
 | `charge.refunded` | A charge was refunded (full or partial) |
 | `checkout.session.completed` | A checkout session completed |
+| `settlement.available` | A settlement batch became available |
+| `payout.pending` | A payout request reserved funds |
+| `payout.processing` | A payout entered provider processing |
 | `payout.succeeded` | A payout completed successfully |
 | `payout.failed` | A payout failed |
+| `payout.cancelled` | A payout was cancelled before dispatch |
+| `payout.needs_review` | The provider result requires manual review |
 
 ## Webhook Payload
 

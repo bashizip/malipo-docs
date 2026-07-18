@@ -10,13 +10,13 @@ Complete these steps to activate your live account.
 
 - Completed sandbox integration and testing
 - Business registration documents ready
-- Bank account for payouts configured
+- Mobile Money payout destination ready for approval
 - Compliance review prepared (BCC requirements)
 
 ## Activation steps
 
 1. **Submit KYC documents** — Company registration, director IDs, proof of address
-2. **Configure payouts** — Add bank account details for settlements
+2. **Configure payouts** — Add a Mobile Money destination for approval
 3. **Compliance review** — Malipo reviews your application (1-3 business days)
 4. **Live approval** — Receive notification and generate live API keys
 5. **Go live** — Replace test keys with live keys in your integration
@@ -28,7 +28,7 @@ Complete these steps to activate your live account.
 | API Key prefix | `sk_test_...` | `sk_live_...` |
 | Real money | No | Yes |
 | KYC required | No | Yes |
-| Payout setup | No | Yes |
+| Approved payout destination | No | Yes |
 | Rate limits | Lower | Higher (per plan) |
 | Support SLA | Best effort | Per plan |
 

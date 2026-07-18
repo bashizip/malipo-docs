@@ -11,8 +11,8 @@ Malipo is a payment gateway purpose-built for the Democratic Republic of Congo. 
 - **Base URL**: `https://api.malipo.dev/v1`
 - **Auth**: Bearer token (secret API key)
 - **Environments**: Sandbox (testing) and Live (production)
-- **Currencies**: CDF and USD
-- **Payouts**: Weekly settlement to your bank account
+- **Live financial currency**: USD
+- **Payouts**: Merchant-requested transfers to an approved Mobile Money destination
 
 ## API overview
 
