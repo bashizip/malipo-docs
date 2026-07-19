@@ -18,6 +18,11 @@ description: Définitions simples des termes de paiement utilisés par Malipo.
 | **Payout / versement** | Transfert vers Mobile Money demandé par le marchand. |
 | **Remboursement** | Argent rendu au titre d’un paiement réussi. |
 | **Settlement / mise à disposition** | Passage des fonds nets éligibles de pending à available. |
+| **Ledger / registre financier** | Registre interne immuable permettant à Malipo d’expliquer chaque mouvement. |
+| **Journal comptable** | Groupe équilibré de débits et crédits créé depuis un même événement. |
+| **Rapprochement** | Comparaison des registres Malipo, des soldes et des preuves prestataire pour trouver les écarts. |
+| **Relevé** | Résumé mensuel limité à l’activité financière du marchand. |
+| **Reversal / contrepassation** | Nouveau mouvement annulant un précédent sans modifier l’historique. |
 | **Snapshot tarifaire** | Détails de prix définitifs mémorisés sur une transaction. |
 | **UTC** | Horloge commune utilisée pour les dates et limites financières. |
 | **Webhook** | Événement authentifié envoyé à votre serveur. |

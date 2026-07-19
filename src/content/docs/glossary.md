@@ -19,6 +19,11 @@ description: Plain-language definitions of payment terms used by Malipo.
 | **Pricing snapshot** | The unchangeable pricing details saved on a charge. |
 | **Refund** | Money returned for a successful charge. |
 | **Settlement** | Moving eligible merchant net funds from pending to available. |
+| **Ledger** | Immutable internal register used by Malipo to explain each financial movement. |
+| **Journal** | Balanced group of debit and credit entries created from one event. |
+| **Reconciliation** | Comparing Malipo records, operational balances, and provider evidence to find differences. |
+| **Statement** | Monthly merchant-only summary of financial activity and balances. |
+| **Reversal** | New movement cancelling an earlier one without editing history. |
 | **UTC** | The common clock used for financial dates and limits. |
 | **Webhook** | An authenticated event sent to your server. |
 

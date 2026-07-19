@@ -48,6 +48,7 @@ export default defineConfig({
             { label: 'Pricing', slug: 'pricing' },
             { label: 'Settlements', slug: 'settlements' },
             { label: 'Payouts', slug: 'payouts' },
+            { label: 'Monthly statements', slug: 'statements' },
             { label: 'Reporting', slug: 'reporting' },
             { label: 'Hosted checkout', slug: 'hosted-checkout' },
             { label: 'Idempotency', slug: 'idempotency' },
