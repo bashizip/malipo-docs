@@ -1,38 +1,43 @@
 ---
-title: Malipo Docs
+title: Introduction
 draft: false
 description: Malipo is a mobile money payment gateway for the DRC.
-template: splash
-hero:
-  title: Malipo Docs
-  tagline: Accept mobile money payments in the DRC via a single API. Vodacom M-Pesa, Orange Money, and Airtel Money.
-  actions:
-    - text: Get started
-      link: /introduction/
-      icon: right-arrow
-      variant: primary
-    - text: View on GitHub
-      link: https://github.com/malipo
-      icon: external
 ---
 
-import { CardGrid, Card } from '@astrojs/starlight/components';
-import LinkCard from '../../components/LinkCard.astro';
+Malipo is a payment gateway purpose-built for the Democratic Republic of Congo. Accept mobile money payments via **Vodacom M-Pesa**, **Orange Money**, and **Airtel Money** through a single API.
 
-<CardGrid>
-  <LinkCard href="/quickstart/" title="Quickstart" icon="rocket">
-    Get up and running in minutes with your first API request.
-  </LinkCard>
-  <LinkCard href="/authentication/" title="Authentication" icon="lock">
-    Learn how to authenticate your API requests securely.
-  </LinkCard>
-  <LinkCard href="/sdks/" title="SDKs & Libraries" icon="setting">
-    Use our official SDKs for Node.js, Python, PHP, Java, and Flutter.
-  </LinkCard>
-  <LinkCard href="/webhooks/" title="Webhooks" icon="bell">
-    Receive real-time notifications for payment events.
-  </LinkCard>
-  <LinkCard href="/going-live/" title="Going Live" icon="globe">
-    Move from sandbox to production environment.
-  </LinkCard>
-</CardGrid>
+## Quick facts
+
+- **Base URL**: `https://api.malipo.dev/v1`
+- **Auth**: Bearer token (secret API key)
+- **Environments**: Sandbox (testing) and Live (production)
+- **Live financial currency**: USD
+- **Payouts**: Merchant-requested transfers to an approved Mobile Money destination
+
+## API overview
+
+The Malipo API lets you:
+
+- **Charge** customers via mobile money
+- **Check transaction status** in real time
+- **Refund** successful charges (full or partial)
+- **Check balance** across currencies
+- **Use hosted checkout** for a pre-built payment page
+- **Receive webhooks** for async event notifications
+- **Generate reports** for reconciliation
+
+## SDKs
+
+Official SDKs are available for:
+
+- [JavaScript / TypeScript](/sdks)
+- [Python](/sdks)
+- [PHP](/sdks)
+- [Java](/sdks)
+- [Flutter](/sdks)
+
+## Need help?
+
+- Check the [sandbox dashboard](https://dashboard.malipo.dev) for API keys and test tools
+- Read the [Going live](/going-live) guide for production activation
+- Contact support at support@malipo.dev

@@ -1,38 +1,43 @@
 ---
-title: Documentation Malipo
+title: Introduction
 draft: false
-description: Malipo est une passerelle de paiement mobile money pour la RDC.
-template: splash
-hero:
-  title: Documentation Malipo
-  tagline: Acceptez les paiements mobile money en RDC via une API unique. Vodacom M-Pesa, Orange Money et Airtel Money.
-  actions:
-    - text: Commencer
-      link: /fr/introduction/
-      icon: right-arrow
-      variant: primary
-    - text: Voir sur GitHub
-      link: https://github.com/malipo
-      icon: external
+description: "Malipo est une passerelle de paiement mobile money pour la RDC."
 ---
 
-import { CardGrid } from '@astrojs/starlight/components';
-import LinkCard from '../../../components/LinkCard.astro';
+Malipo est une passerelle de paiement conçue spécialement pour la République Démocratique du Congo. Acceptez les paiements mobile money via **Vodacom M-Pesa**, **Orange Money** et **Airtel Money** via une API unique.
 
-<CardGrid>
-  <LinkCard href="/fr/quickstart/" title="Démarrage rapide" icon="rocket">
-    Commencez en quelques minutes avec votre première requête API.
-  </LinkCard>
-  <LinkCard href="/fr/authentication/" title="Authentification" icon="lock">
-    Apprenez à authentifier vos requêtes API en toute sécurité.
-  </LinkCard>
-  <LinkCard href="/fr/sdks/" title="SDKs & Bibliothèques" icon="setting">
-    Utilisez nos SDK officiels pour Node.js, Python, PHP, Java et Flutter.
-  </LinkCard>
-  <LinkCard href="/fr/webhooks/" title="Webhooks" icon="bell">
-    Recevez des notifications en temps réel pour les événements de paiement.
-  </LinkCard>
-  <LinkCard href="/fr/going-live/" title="Passer en production" icon="globe">
-    Passez de l'environnement sandbox à la production.
-  </LinkCard>
-</CardGrid>
+## Informations rapides
+
+- **URL de base** : `https://api.malipo.dev/v1`
+- **Auth** : Bearer token (clé API secrète)
+- **Environnements** : Sandbox (test) et Live (production)
+- **Devise financière live** : USD
+- **Versements** : Transferts demandés par le marchand vers une destination Mobile Money approuvée
+
+## Aperçu de l'API
+
+L'API Malipo vous permet de :
+
+- **Débiter** les clients via mobile money
+- **Vérifier le statut** des transactions en temps réel
+- **Rembourser** les transactions réussies (total ou partiel)
+- **Consulter le solde** dans toutes les devises
+- **Utiliser la page de paiement hébergée** pour une expérience pré-construite
+- **Recevoir des webhooks** pour les notifications d'événements asynchrones
+- **Générer des rapports** pour le rapprochement
+
+## SDKs
+
+Des SDKs officiels sont disponibles pour :
+
+- [JavaScript / TypeScript](/fr/sdks)
+- [Python](/fr/sdks)
+- [PHP](/fr/sdks)
+- [Java](/fr/sdks)
+- [Flutter](/fr/sdks)
+
+## Besoin d'aide ?
+
+- Consultez le [tableau de bord sandbox](https://dashboard.malipo.dev) pour les clés API et les outils de test
+- Lisez le guide [Passer en production](/fr/going-live) pour l'activation
+- Contactez le support à support@malipo.dev

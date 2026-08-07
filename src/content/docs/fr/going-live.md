@@ -15,7 +15,8 @@ Complétez ces étapes pour activer votre compte live.
 
 ## Étapes d'activation
 
-1. **Soumettre les documents KYC** — Enregistrement de l'entreprise, pièces d'identité des dirigeants, justificatif de domicile
+1. **Soumettre les documents de vérification** — Les personnes physiques Starter fournissent identité et justificatif de résidence. Les entreprises fournissent RCCM, ID.NAT, NIF/DGI, pièces société, représentant habilité et bénéficiaires effectifs.
+   L’identité approuvée permet au Starter de demander le live ; le justificatif de résidence approuvé est requis avant le premier versement. Le KYB entreprise complet est requis avant le live.
 2. **Configurer les versements** — Ajoutez une destination Mobile Money pour approbation
 3. **Examen de conformité** — Malipo examine votre demande (1-3 jours ouvrés)
 4. **Approbation live** — Recevez la notification et générez les clés API live

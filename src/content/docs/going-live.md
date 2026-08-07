@@ -15,7 +15,8 @@ Complete these steps to activate your live account.
 
 ## Activation steps
 
-1. **Submit KYC documents** — Company registration, director IDs, proof of address
+1. **Submit verification documents** — Starter individuals submit identity and proof of residence. Businesses submit RCCM, ID.NAT, NIF/DGI, company documents, the authorized representative and beneficial owners.
+   Identity approval lets Starter merchants request live access; an approved proof of residence is required before the first payout. A complete business KYB review is required before live access.
 2. **Configure payouts** — Add a Mobile Money destination for approval
 3. **Compliance review** — Malipo reviews your application (1-3 business days)
 4. **Live approval** — Receive notification and generate live API keys
