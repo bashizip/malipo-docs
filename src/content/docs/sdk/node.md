@@ -92,14 +92,18 @@ const app = express();
 const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
 
 app.post("/webhooks/malipo", express.raw({ type: "application/json" }), (req, res) => {
-  const signature = req.header("x-webhook-signature");
-  const secret = process.env.MALIPO_WEBHOOK_SECRET;
+  const signature = req.header("x-webhook-signature") ?? "";
+  const timestamp = req.header("x-webhook-timestamp");
+  const secret = process.env.MALIPO_WEBHOOK_SECRET ?? "";
 
   try {
+    // Keep the raw body unchanged. The SDK validates the timestamp window (5 minutes by default)
+    // and signs the timestamp plus a dot plus the raw payload when the timestamp header is present.
     const event = malipo.webhooks.constructEvent(
       req.body.toString(),
       signature,
-      secret
+      secret,
+      timestamp
     );
 
     if (event.type === "charge.succeeded") {
@@ -109,7 +113,8 @@ app.post("/webhooks/malipo", express.raw({ type: "application/json" }), (req, re
 
     res.sendStatus(200);
   } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
+    console.error(`Webhook Error: ${err instanceof Error ? err.message : "Invalid webhook"}`);
+    res.sendStatus(400);
   }
 });
 ```

@@ -50,33 +50,38 @@ Every webhook event follows this standard envelope format:
 
 ## Signature Verification
 
-Verify webhook authenticity using HMAC-SHA256 signatures.
+Verify webhook authenticity using the `X-Webhook-Signature` and `X-Webhook-Timestamp` headers. The signature is HMAC-SHA256 over `${timestamp}.${rawPayload}` and timestamps older than five minutes are rejected by default.
 
 ```typescript title="Node.js verification example"
-const crypto = require("crypto");
+import express from "express";
+import { Malipo } from "malipo-node";
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload, "utf8")
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected)
-  );
-}
+const app = express();
+const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
 
+// Use express.raw() so the payload is not parsed before verification.
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
-  const signature = req.headers["x-malipo-signature"];
-  if (!verifyWebhook(req.body, signature, process.env.WEBHOOK_SECRET)) {
-    return res.status(400).send("Invalid signature");
+  const signature = req.header("x-webhook-signature") ?? "";
+  const timestamp = req.header("x-webhook-timestamp");
+  const secret = process.env.MALIPO_WEBHOOK_SECRET ?? "";
+
+  try {
+    const event = malipo.webhooks.constructEvent(
+      req.body.toString(),
+      signature,
+      secret,
+      timestamp
+    );
+
+    console.log(event.type);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(`Webhook Error: ${err instanceof Error ? err.message : "Invalid webhook"}`);
+    res.sendStatus(400);
   }
-  const event = JSON.parse(req.body);
-  console.log(event.type);
-  res.json({ received: true });
 });
 ```
 
 :::danger[Always verify signatures]
-Never trust incoming webhooks without verifying the signature. This prevents attackers from spoofing events.
+Never trust incoming webhooks without verifying the signature. Keep the webhook secret on your server, preserve the raw request body, and return HTTP 400 when verification fails.
 :::

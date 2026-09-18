@@ -50,33 +50,38 @@ Chaque événement webhook suit ce format standard :
 
 ## Vérification de signature
 
-Vérifiez l'authenticité des webhooks en utilisant les signatures HMAC-SHA256.
+Vérifiez l'authenticité des webhooks avec les en-têtes `X-Webhook-Signature` et `X-Webhook-Timestamp`. La signature est un HMAC-SHA256 calculé sur `${timestamp}.${rawPayload}` et les horodatages de plus de cinq minutes sont rejetés par défaut.
 
 ```typescript title="Exemple de vérification Node.js"
-const crypto = require("crypto");
+import express from "express";
+import { Malipo } from "malipo-node";
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload, "utf8")
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected)
-  );
-}
+const app = express();
+const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
 
+// Utilisez express.raw() pour ne pas analyser le payload avant la vérification.
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
-  const signature = req.headers["x-malipo-signature"];
-  if (!verifyWebhook(req.body, signature, process.env.WEBHOOK_SECRET)) {
-    return res.status(400).send("Signature invalide");
+  const signature = req.header("x-webhook-signature") ?? "";
+  const timestamp = req.header("x-webhook-timestamp");
+  const secret = process.env.MALIPO_WEBHOOK_SECRET ?? "";
+
+  try {
+    const event = malipo.webhooks.constructEvent(
+      req.body.toString(),
+      signature,
+      secret,
+      timestamp
+    );
+
+    console.log(event.type);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(`Erreur webhook : ${err instanceof Error ? err.message : "Webhook invalide"}`);
+    res.sendStatus(400);
   }
-  const event = JSON.parse(req.body);
-  console.log(event.type);
-  res.json({ received: true });
 });
 ```
 
 :::danger[Toujours vérifier les signatures]
-Ne faites jamais confiance aux webhooks entrants sans vérifier la signature. Cela empêche les attaquants de falsifier les événements.
+Ne faites jamais confiance aux webhooks entrants sans vérifier la signature. Conservez le secret sur votre serveur, gardez le corps brut de la requête et retournez HTTP 400 si la vérification échoue.
 :::
