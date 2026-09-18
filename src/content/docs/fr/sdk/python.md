@@ -51,6 +51,12 @@ except MalipoError as e:
 
 ## Webhook (Flask)
 
+:::caution[Nécessite malipo 1.0.2 ou une version ultérieure]
+La version 1.0.1 et les précédentes n'ont pas de paramètre `timestamp` : elles ne calculent le HMAC
+que sur le corps brut, donc passer un horodatage lève une `TypeError` et chaque livraison en direct
+échoue à la vérification. Vérifiez votre version avec `pip show malipo` et passez à 1.0.2 ou plus.
+:::
+
 ```python
 import os
 from flask import Flask, request
@@ -66,6 +72,9 @@ def handle_webhook():
     payload = request.get_data(as_text=True)
 
     try:
+        # Nécessite malipo 1.0.2 ou une version ultérieure : les versions précédentes ignorent
+        # l'argument d'horodatage et vérifient le corps seul, donc chaque livraison en direct
+        # échoue avec « Invalid webhook signature ».
         # Conservez le corps brut. Le SDK vérifie la fenêtre temporelle (5 minutes par défaut)
         # et signe l'horodatage, un point, puis le payload brut lorsque l'en-tête est présent.
         event = malipo.webhooks.construct_event(

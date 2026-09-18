@@ -52,6 +52,12 @@ except MalipoError as e:
 
 ## Webhook Handler (Flask)
 
+:::caution[Requires malipo 1.0.2 or later]
+Version 1.0.1 and earlier has no `timestamp` parameter: it hashes the raw body only, so passing
+one raises `TypeError` and every live delivery fails signature verification. Check your version
+with `pip show malipo` and upgrade to 1.0.2 or later.
+:::
+
 ```python
 import os
 from flask import Flask, request
@@ -67,6 +73,8 @@ def handle_webhook():
     payload = request.get_data(as_text=True)
 
     try:
+        # Requires malipo 1.0.2 or later: earlier versions ignore the timestamp argument and
+        # verify the body only, so every live delivery fails with "Invalid webhook signature".
         # Keep the raw body unchanged. The SDK validates the timestamp window (5 minutes by default)
         # and signs the timestamp plus a dot plus the raw payload when the timestamp header is present.
         event = malipo.webhooks.construct_event(

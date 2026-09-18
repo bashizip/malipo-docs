@@ -61,6 +61,13 @@ try {
 
 ## Webhook Handler
 
+:::caution[Requires malipo/malipo-php 1.0.3 or later]
+Version 1.0.2 and earlier ignores the fourth argument entirely — PHP silently discards extra
+arguments passed to a user-defined function — so verification falls back to the body-only scheme
+and every live delivery fails with `Invalid webhook signature`. Check the version in
+`composer.lock` and upgrade to 1.0.3 or later.
+:::
+
 ```php
 <?php
 require 'vendor/autoload.php';
@@ -74,6 +81,8 @@ $signature = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'];
 $timestamp = $_SERVER['HTTP_X_WEBHOOK_TIMESTAMP'] ?? null;
 
 try {
+    // Requires malipo/malipo-php 1.0.3 or later: earlier versions ignore the timestamp argument
+    // and verify the body only, so every live delivery fails with "Invalid webhook signature".
     // Keep the raw body unchanged. The SDK validates the timestamp window (5 minutes by default)
     // and signs the timestamp plus a dot plus the raw payload when the timestamp header is present.
     $event = $malipo->webhooks->constructEvent(
