@@ -53,6 +53,7 @@ except MalipoError as e:
 ## Webhook Handler (Flask)
 
 ```python
+import os
 from flask import Flask, request
 from malipo import Malipo
 
@@ -62,13 +63,17 @@ malipo = Malipo(api_key='...')
 @app.route('/webhooks/malipo', methods=['POST'])
 def handle_webhook():
     signature = request.headers.get('X-Webhook-Signature')
+    timestamp = request.headers.get('X-Webhook-Timestamp')
     payload = request.get_data(as_text=True)
 
     try:
+        # Keep the raw body unchanged. The SDK validates the timestamp window (5 minutes by default)
+        # and signs the timestamp plus a dot plus the raw payload when the timestamp header is present.
         event = malipo.webhooks.construct_event(
             payload=payload,
             signature=signature,
-            secret='whsec_your_secret'
+            secret=os.environ['MALIPO_WEBHOOK_SECRET'],
+            timestamp=timestamp
         )
 
         if event['type'] == 'charge.succeeded':

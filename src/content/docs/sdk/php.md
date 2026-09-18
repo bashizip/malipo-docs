@@ -71,12 +71,16 @@ $malipo = new Malipo(getenv('MALIPO_SECRET_KEY'));
 
 $payload = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'];
+$timestamp = $_SERVER['HTTP_X_WEBHOOK_TIMESTAMP'] ?? null;
 
 try {
+    // Keep the raw body unchanged. The SDK validates the timestamp window (5 minutes by default)
+    // and signs the timestamp plus a dot plus the raw payload when the timestamp header is present.
     $event = $malipo->webhooks->constructEvent(
         $payload,
         $signature,
-        getenv('MALIPO_WEBHOOK_SECRET')
+        getenv('MALIPO_WEBHOOK_SECRET'),
+        $timestamp
     );
 
     if ($event['type'] === 'charge.succeeded') {

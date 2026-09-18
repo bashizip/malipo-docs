@@ -50,7 +50,27 @@ Every webhook event follows this standard envelope format:
 
 ## Signature Verification
 
-Verify webhook authenticity using the `X-Webhook-Signature` and `X-Webhook-Timestamp` headers. The signature is HMAC-SHA256 over `${timestamp}.${rawPayload}` and timestamps older than five minutes are rejected by default.
+Every delivery carries two headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-Webhook-Timestamp` | The timestamp used in the signed message, in ISO-8601 format |
+| `X-Webhook-Signature` | Lowercase hex HMAC-SHA256 signature of the signed message |
+
+The signed message is the timestamp, a single dot (`.`), then the exact raw request body:
+
+```text
+signed message = timestamp + "." + rawBody   (raw bytes, unmodified)
+signature      = hex(HMAC-SHA256(secret, signed message))
+```
+
+Deliveries whose timestamp is more than five minutes away from your server's clock are rejected by default, so keep your server time in sync. Always verify against the raw, unparsed request body — reading the JSON and re-serialising it changes whitespace and key order, which changes the signature.
+
+### The signing secret
+
+Each endpoint has its own signing secret, shown in the dashboard. It is a 64-character lowercase hexadecimal string. Use it exactly as displayed: there is no `whsec_` prefix, and no surrounding quotes or trailing whitespace. A secret with any extra character will never produce a matching signature.
+
+If your account has more than one active endpoint, each keeps its own secret. Verify a delivery with the secret of the endpoint whose URL received it.
 
 ```typescript title="Node.js verification example"
 import express from "express";

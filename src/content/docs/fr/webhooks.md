@@ -50,7 +50,27 @@ Chaque événement webhook suit ce format standard :
 
 ## Vérification de signature
 
-Vérifiez l'authenticité des webhooks avec les en-têtes `X-Webhook-Signature` et `X-Webhook-Timestamp`. La signature est un HMAC-SHA256 calculé sur `${timestamp}.${rawPayload}` et les horodatages de plus de cinq minutes sont rejetés par défaut.
+Chaque livraison contient deux en-têtes :
+
+| En-tête | Description |
+|---------|-------------|
+| `X-Webhook-Timestamp` | L'horodatage utilisé dans le message signé, au format ISO-8601 |
+| `X-Webhook-Signature` | La signature HMAC-SHA256 en hexadécimal minuscule du message signé |
+
+Le message signé est composé de l'horodatage, d'un point (`.`), puis du corps brut exact de la requête :
+
+```text
+message signé = horodatage + "." + corps brut   (octets bruts, non modifiés)
+signature      = hex(HMAC-SHA256(secret, message signé))
+```
+
+Les livraisons dont l'horodatage s'écarte de plus de cinq minutes de l'horloge de votre serveur sont rejetées par défaut : maintenez votre horloge synchronisée. Vérifiez toujours la signature sur le corps brut non analysé — relire le JSON puis le re-sérialiser modifie les espaces et l'ordre des clés, et donc la signature.
+
+### Le secret de signature
+
+Chaque endpoint possède son propre secret de signature, affiché dans le tableau de bord. Il s'agit d'une chaîne de 64 caractères hexadécimaux minuscules. Utilisez-le exactement tel qu'affiché : aucun préfixe `whsec_`, aucun guillemet, aucun espace superflu. Un secret comportant un caractère supplémentaire ne produira jamais une signature correspondante.
+
+Si votre compte comporte plusieurs endpoints actifs, chacun conserve son propre secret. Vérifiez une livraison avec le secret de l'endpoint dont l'URL a reçu la requête.
 
 ```typescript title="Exemple de vérification Node.js"
 import express from "express";
