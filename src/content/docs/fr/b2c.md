@@ -1,6 +1,6 @@
 ---
 title: Sandbox B2C
-description: Verser vers le Mobile Money d'un client depuis le solde marchand avec le SDK Node.js candidat.
+description: Verser vers le Mobile Money d'un client depuis le solde marchand avec la beta publiée du SDK Node.js.
 ---
 
 Votre backend gère les wallets clients et leur comptabilité. Malipo conserve les bénéficiaires approuvés et réserve votre solde marchand disponible pour un versement ; un bénéficiaire n'a aucun wallet ni solde Malipo.
@@ -13,7 +13,7 @@ L'API B2C est disponible pour la recette sur `https://api-staging.malipo.dev/v1`
 
 Utilisez une clé serveur sandbox staging dédiée commençant par `sk_test_`. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
 
-Installez l'artefact candidat fourni pour la recette, puis enregistrez l'exemple ci-dessous dans `b2c.mjs`. Il nécessite Node.js 20 ou plus ; l'outil distinct de recette webhook SQLite nécessite Node.js 24.
+Installez la version beta publiée sur npm, puis enregistrez l'exemple ci-dessous dans `b2c.mjs`. Il nécessite Node.js 20 ou plus ; l'outil distinct de recette webhook SQLite nécessite Node.js 24.
 
 ```bash
 npm install malipo-node@1.3.0-beta.1
