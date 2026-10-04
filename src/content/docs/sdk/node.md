@@ -118,3 +118,7 @@ app.post("/webhooks/malipo", express.raw({ type: "application/json" }), (req, re
   }
 });
 ```
+
+## B2C sandbox
+
+The B2C candidate adds beneficiaries, disbursements and testing resources. See [B2C sandbox](/b2c/). SDK candidate `1.3.0-beta.1`; npm publication pending.
