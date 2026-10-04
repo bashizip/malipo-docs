@@ -24,3 +24,7 @@ The amount is reserved immediately. Depending on the active policy, the request 
 | `needs_review` | Uncertain provider result; funds stay reserved |
 
 You can cancel only before provider processing starts. Destination changes require owner approval and become active exactly 24 hours later in UTC. Existing requests keep their original masked destination snapshot.
+
+## Customer withdrawals
+
+For payments to your customers, see [B2C sandbox](/b2c/). SDK candidate `1.3.0-beta.1`; npm publication pending.

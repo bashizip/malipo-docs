@@ -24,3 +24,7 @@ Le montant est réservé immédiatement. Selon la politique active, la demande e
 | `needs_review` | Résultat incertain, fonds maintenus réservés |
 
 Vous pouvez annuler uniquement avant le début du traitement prestataire. Une nouvelle destination exige l’approbation d’un owner et devient active exactement 24 heures plus tard en UTC. Les demandes existantes conservent la destination masquée mémorisée à leur création.
+
+## Retraits clients
+
+Pour les versements à vos clients, consultez [B2C sandbox](/fr/b2c/). SDK candidate `1.3.0-beta.1`; publication npm en attente.
