@@ -6,17 +6,17 @@ description: Pay a customer's Mobile Money account from your merchant balance wi
 Your backend owns customer wallets and their accounting. Malipo stores approved beneficiaries and reserves your available merchant balance for a disbursement; a beneficiary has no Malipo wallet or balance.
 
 :::caution[Sandbox candidate]
-The B2C API is available for integration testing at `https://api-staging.malipo.dev/v1`. Node.js SDK `1.3.0-beta.1` is prepared and tested as a tarball; npm publication is pending. The registry's current stable package does not provide this candidate. Live B2C remains disabled.
+The B2C API is available for integration testing at `https://api-staging.malipo.dev/v1`. Node.js SDK `1.3.0-beta.1` is published on npm under the `beta` tag and verified against the accepted tarball. Install the beta explicitly; `latest` remains `1.2.5`. Live B2C remains disabled.
 :::
 
 ## Prepare your server
 
 Use a dedicated staging sandbox server key beginning with `sk_test_`. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
 
-Install the candidate artifact supplied for testing, then save the example below as `b2c.mjs`. It needs Node.js 20 or later. The separate SQLite webhook acceptance tool needs Node.js 24.
+Install the published sandbox beta, then save the example below as `b2c.mjs`. It needs Node.js 20 or later. The separate SQLite webhook acceptance tool needs Node.js 24.
 
 ```bash
-npm install ./malipo-node-1.3.0-beta.1.tgz
+npm install malipo-node@1.3.0-beta.1
 node --env-file=.env b2c.mjs
 ```
 

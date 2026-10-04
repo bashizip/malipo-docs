@@ -6,7 +6,7 @@ description: Verser vers le Mobile Money d'un client depuis le solde marchand av
 Votre backend gère les wallets clients et leur comptabilité. Malipo conserve les bénéficiaires approuvés et réserve votre solde marchand disponible pour un versement ; un bénéficiaire n'a aucun wallet ni solde Malipo.
 
 :::caution[Candidat sandbox]
-L'API B2C est disponible pour la recette sur `https://api-staging.malipo.dev/v1`. Le SDK Node.js `1.3.0-beta.1` est préparé et testé sous forme de tarball ; sa publication npm reste en attente. Le paquet stable actuel du registre ne fournit pas ce candidat. Le B2C live reste désactivé.
+L'API B2C est disponible pour la recette sur `https://api-staging.malipo.dev/v1`. Le SDK Node.js `1.3.0-beta.1` est publié sur npm sous le tag `beta`, avec une intégrité identique au tarball recetté. Installer explicitement la beta ; `latest` reste sur `1.2.5`. Le B2C live reste désactivé.
 :::
 
 ## Préparer votre serveur
@@ -16,7 +16,7 @@ Utilisez une clé serveur sandbox staging dédiée commençant par `sk_test_`. A
 Installez l'artefact candidat fourni pour la recette, puis enregistrez l'exemple ci-dessous dans `b2c.mjs`. Il nécessite Node.js 20 ou plus ; l'outil distinct de recette webhook SQLite nécessite Node.js 24.
 
 ```bash
-npm install ./malipo-node-1.3.0-beta.1.tgz
+npm install malipo-node@1.3.0-beta.1
 node --env-file=.env b2c.mjs
 ```
 

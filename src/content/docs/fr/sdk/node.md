@@ -116,4 +116,4 @@ app.post("/webhooks/malipo", express.raw({ type: "application/json" }), (req, re
 
 ## Sandbox B2C
 
-Le candidat B2C ajoute les ressources bénéficiaires, versements et testing. Voir [B2C sandbox](/fr/b2c/). SDK candidate `1.3.0-beta.1`; publication npm en attente.
+Le candidat B2C ajoute les ressources bénéficiaires, versements et testing. Voir [B2C sandbox](/fr/b2c/). Beta sandbox publiée : `npm install malipo-node@1.3.0-beta.1`. Le tag stable `latest` reste sur `1.2.5`.
