@@ -120,3 +120,17 @@ Consultez l’[intégration des webhooks avec Node.js](/fr/sdk/node/#webhooks) p
 ## Disponibilité du B2C live
 
 Le live nécessite une approbation et une recette opérateur distinctes : vérifications marchand/bénéficiaire, résidence, sanctions fraîches, holds, solde disponible et plafonds partagés s'appliquent. Orange Money est qualifié en premier, puis M-Pesa séparément. Un accusé de réception opérateur ne constitue pas une preuve de paiement. Conservez votre intégration B2C sur des clés sandbox jusqu’à l’activation des versements live pour votre marchand par Malipo.
+
+## Candidat de remédiation (pas encore publié)
+
+Une politique publiée est obligatoire dans les deux environnements. Pour la sandbox candidate, `testing.setLimits(...)` publie explicitement des versions simulées à frais nuls et ne modifie jamais le live. Les versements exposent la version de politique figée et l’état du criblage de l’action.
+
+Le prochain SDK candidat, `1.3.0-beta.2`, ajoute les soldes USD/CDF distincts, les devis et débits totaux figés avec frais, les curseurs stables, les lots JSON/CSV de 500 lignes maximum, l’archivage et les états de criblage. L’intégration publiée `1.3.0-beta.1` reste la référence déployée jusqu’à recette staging et publication du candidat.
+
+Chaque nouvelle approbation live, réservation et autorisation d’envoi exige un nouveau criblage favorable du bénéficiaire. Un résultat historique ne remplace jamais le contrôle propre à l’action. Une panne bloque la nouvelle action. Replays exacts, lectures, consultations et confirmations tardives restent disponibles ; une soumission incertaine conserve les fonds réservés.
+
+Routes candidates : `POST /v1/disbursements/quote`, `GET /v1/b2c-balance`, `POST /v1/disbursements/batches`, `GET /v1/disbursements/batches/{id}` et `POST /v1/beneficiaries/{id}/archive`. Les listes acceptent `starting_after`, `include_total` optionnel et retournent `pagination.next_cursor`/`has_more`. Les routes existantes et le paramètre historique explicite `page` restent disponibles.
+
+USD utilise des chaînes décimales ; CDF exige des chaînes entières. Aucune conversion de devise. Les frais et le débit total sont figés à la réservation et entièrement restitués sur annulation admissible ou échec certain. CSV : `beneficiary_id,reference,amount,currency`, plus `idempotency_key` facultatif. Les lots répondent 202 après persistance et exposent les résultats individuels ; chaque ligne a son propre criblage requis.
+
+L’archivage bloque les nouvelles demandes et conserve les opérations existantes. Les lectures affichent des numéros masqués. La validation à deux owners couvre KYC, résidence et preuve opérateur du titulaire. Le live reste désactivé jusqu’à qualification réelle de chaque couple marchand/réseau/devise. M-Pesa nécessite une qualification distincte.
