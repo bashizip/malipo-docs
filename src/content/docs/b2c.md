@@ -1,19 +1,21 @@
 ---
-title: B2C sandbox
-description: Pay a customer's Mobile Money account from your merchant balance with the Node.js SDK candidate.
+title: B2C disbursements
+description: Integrate B2C disbursements with the production Malipo API and the official Node.js SDK.
 ---
 
 Your backend owns customer wallets and their accounting. Malipo stores approved beneficiaries and reserves your available merchant balance for a disbursement; a beneficiary has no Malipo wallet or balance.
 
-:::caution[Sandbox candidate]
-The B2C API is available for integration testing at `https://api-staging.malipo.dev/v1`. Node.js SDK `1.3.0-beta.1` is published on npm under the `beta` tag and verified against the accepted tarball. Install the beta explicitly; `latest` remains `1.2.5`. Live B2C remains disabled.
-:::
+## Service availability
+
+Use the production API at `https://api.malipo.dev/v1`. B2C is available in **sandbox mode**, with a `sk_test_` server key: amounts, provider outcomes and beneficiary approvals are simulated, and no real money is sent. The API domain identifies the deployed service; the key identifies the transaction environment. Live B2C disbursements are not enabled.
+
+The integration version is `malipo-node@1.3.0-beta.1`, published on npm. Pin this exact version to use `beneficiaries`, `disbursements` and `testing`. The npm `latest` tag currently points to `1.2.5`, which does not include these resources. See the [Node.js SDK reference](/sdk/node/).
 
 ## Prepare your server
 
-Use a dedicated staging sandbox server key beginning with `sk_test_`. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
+Create a dedicated sandbox server key in the [production merchant portal](https://malipo.dev/api-keys), beginning with `sk_test_`. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
 
-Install the published sandbox beta, then save the example below as `b2c.mjs`. It needs Node.js 20 or later. The separate SQLite webhook acceptance tool needs Node.js 24.
+Install the SDK, then save the complete example below as `b2c.mjs`. Use Node.js 20.6 or later for the `--env-file` command.
 
 ```bash
 npm install malipo-node@1.3.0-beta.1
@@ -33,9 +35,9 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const apiKey = process.env.MALIPO_B2C_API_KEY;
 if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_B2C_API_KEY is required');
-const client = new Malipo({ apiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
+const client = new Malipo({ apiKey }); // https://api.malipo.dev/v1
 const run = randomUUID();
-// Existing force-success sandbox phone. It is never sent to an operator.
+// Sandbox test phone: no request is sent to a real operator.
 let charge = await client.charges.create({ amount: 30, currency: 'USD', phone: '+243000000001', network: 'ORANGE_MONEY' }, { idempotencyKey: `b2c-funding-${run}` });
 for (let attempt = 0; charge.status === 'pending' && attempt < 30; attempt++) {
   await delay(1000);
@@ -83,7 +85,7 @@ An identical key or reference and content returns the existing operation. Differ
 | `disbursements.retrieve` | `GET /disbursements/{id}` |
 | `disbursements.cancel` | `POST /disbursements/{id}/cancel` |
 
-List filters include `reference`, `status`, `page` and `page_size` (maximum 100). Responses contain `data` and `pagination`; reference filters stay within the authenticated merchant/key context. Unknown or foreign resources return 404; missing write permission returns 403.
+Disbursement lists support `reference`, `status`, `page` and `page_size` (maximum 100). Beneficiary lists support `page` and `page_size`. Responses contain `data` and `pagination`; reference filters stay within the authenticated merchant/key context. Unknown or foreign resources return 404; missing write permission returns 403.
 
 `pending` reserves funds once. `processing` means the request was taken up. `needs_review` retains the reservation while the outcome is uncertain. `succeeded` never debits twice. Certain `failed` results or `cancelled` operations restore funds once. Cancellation succeeds only before worker pickup. Never release a customer reservation just because a request times out.
 
@@ -113,8 +115,8 @@ Require both `X-Webhook-Timestamp` and `X-Webhook-Signature`. Call `client.webho
 
 Persist each event ID with a unique constraint and acknowledge only after durable storage. Apply customer wallet effects atomically with deduplication in your database. Replayed events keep their ID. Events can arrive twice or out of order: reconcile with `disbursements.retrieve(id)`, and never replace a terminal status with an older pending or processing event. Return a retryable failure if storage or reconciliation fails. Malipo retries delivery five times with backoff; request a replay after exhaustion.
 
-The SQLite acceptance receiver in the SDK candidate source (`scripts/b2c-webhook-receiver.mjs`) demonstrates durable deduplication, restart recovery and reconciliation on synthetic data. Its tables are a testing example; integrate the same constraints with your own customer wallet ledger.
+See the [Node.js webhook integration](/sdk/node/#webhooks) for signature verification and durable event handling. Your application owns event storage and customer wallet accounting.
 
-## Before live use
+## Live B2C availability
 
-Live needs a separate approval and operator acceptance: merchant and beneficiary verification, residence, fresh sanctions screening, holds, available balance and shared payout limits all apply. Orange Money is qualified first, then M-Pesa separately. An operator acknowledgement is not proof of payment. No live date is promised by this sandbox preview.
+Live needs a separate approval and operator acceptance: merchant and beneficiary verification, residence, fresh sanctions screening, holds, available balance and shared payout limits all apply. Orange Money is qualified first, then M-Pesa separately. An operator acknowledgement is not proof of payment. Keep your B2C integration on sandbox keys until Malipo enables live disbursements for your merchant.
