@@ -1,124 +1,352 @@
 ---
 title: Node.js SDK
 draft: false
-description: Official Node.js and TypeScript integration guide for the Malipo Payment Gateway.
+description: Official Malipo Node.js and TypeScript reference for payments, B2C disbursements and webhooks.
 ---
 
-Official Node.js and TypeScript integration guide for the Malipo Payment Gateway.
+The official Node.js SDK connects your backend to the Malipo production API at `https://api.malipo.dev/v1`. It supports payments, refunds, hosted checkout, balances, beneficiaries, B2C disbursements and webhook verification.
+
+This reference covers the published **`malipo-node@1.3.0-beta.1`** package. B2C is available in sandbox with `sk_test_` keys. Existing live payment services use `sk_live_` keys; live B2C disbursements are not enabled. Your backend owns customer wallets and their accounting.
 
 ## Installation
 
+Use Node.js 20 or later. Pin the version below to include B2C resources; npm `latest` currently points to `1.2.5`, which does not include them.
+
 ```bash
-npm install malipo-node
+npm install malipo-node@1.3.0-beta.1
+# Yarn
+yarn add malipo-node@1.3.0-beta.1
+# pnpm
+pnpm add malipo-node@1.3.0-beta.1
 ```
 
-## Quickstart
+## Initialize the client
 
-```typescript
-import { Malipo } from "malipo-node";
+Create a server API key in the [merchant portal](https://malipo.dev/api-keys) and store it in your backend environment. Never expose a secret key in browser or mobile code.
 
-const malipo = new Malipo({
-  apiKey: process.env.MALIPO_SECRET_KEY
-});
+```javascript
+import { Malipo } from 'malipo-node';
 
-// Create a charge
+const apiKey = process.env.MALIPO_SECRET_KEY;
+if (!apiKey) throw new Error('MALIPO_SECRET_KEY is required');
+const malipo = new Malipo({ apiKey });
+```
+
+ES modules support both `import { Malipo }` and `import Malipo`. CommonJS is also supported:
+
+```javascript
+const { Malipo } = require('malipo-node');
+const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
+```
+
+| Option | Type | Behavior |
+|---|---|---|
+| `apiKey` | `string` | Required server secret key. |
+| `environment` | `'sandbox'` or `'live'` | Inferred from the key prefix when omitted. Keep it consistent with the key. |
+| `baseUrl` | `string` | Defaults to `https://api.malipo.dev/v1`; custom values must include `/v1` without a trailing slash. |
+
+Sandbox and live keys use the same production API domain. Sandbox operations simulate money movement; live payment operations move real money. Credentials and data from a separate staging deployment cannot be reused on production.
+
+## Idempotency and amounts
+
+Save each business operation's parameters and idempotency key before sending it. After a lost response, retry the same operation with the same key and body.
+
+- Charges and refunds require `idempotencyKey` in live. Supply it in sandbox too to test retries.
+- B2C `disbursements.create` requires `idempotencyKey` for every request, including sandbox. Keys and client references have a maximum length of 128 characters. A divergent replay returns HTTP `409`.
+- Charges, refunds and checkout amounts are numbers. B2C amounts are decimal strings such as `'20.00'`, with `currency: 'USD'`.
+
+## Charges
+
+`charges.create(params, { idempotencyKey })` initiates a Mobile Money charge. This example uses a sandbox success-test phone; use it with a `sk_test_` key. In live, provide the customer's actual phone number.
+
+```javascript
 const charge = await malipo.charges.create({
-  amount: 10,
-  currency: "USD",
-  phone: "+243810000000",
-  network: "VODACOM_MPESA",
-  description: "Order #123"
-}, {
-  idempotencyKey: "unique_order_id_123"
-});
+  amount: 30,
+  currency: 'USD',
+  phone: '+243000000001',
+  network: 'ORANGE_MONEY',
+  description: 'Order #789',
+  metadata: { order_id: '789' },
+  payer: {
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: 'jane.doe@example.com',
+  },
+}, { idempotencyKey: 'order-789' });
 
-// Retrieve status later
-const transaction = await malipo.transactions.retrieve(charge.id);
-console.log(transaction.status);
+console.log(charge.id, charge.status);
 ```
 
-## Check Balance
-
-```typescript
-const balance = await malipo.balance.retrieve();
-console.log(`Available: ${balance.available[0].amount} ${balance.available[0].currency}`);
-```
-
-## Error Handling
-
-```typescript
-try {
-  await malipo.charges.create({ amount: -1 });
-} catch (err) {
-  if (err.name === 'MalipoError') {
-    console.error(`API Error: ${err.message}`);
-    console.error(`Status Code: ${err.statusCode}`);
-  }
-}
-```
+`ChargeCreateParams` requires `amount`, `currency`, `phone` and `network`. Optional fields are `description`, `metadata` and `payer` (first name, last name and email). Networks are `VODACOM_MPESA`, `ORANGE_MONEY` and `AIRTEL_MONEY`. Live charges use USD; sandbox charges support USD or CDF. Check the final status before fulfilling an order.
 
 ## Refunds
 
-```typescript
+`refunds.create(params, { idempotencyKey })` refunds a successful charge. Omit `amount` for a full refund; include it for a partial refund. `reason` and `metadata` are optional.
+
+```javascript
 const refund = await malipo.refunds.create({
-  charge_id: "ch_123",
-  amount: 5.00,
-  reason: "Customer return"
-}, {
-  idempotencyKey: "refund_order_123"
-});
-console.log(refund.status);
+  charge_id: charge.id,
+  amount: 5,
+  reason: 'Customer return',
+}, { idempotencyKey: 'refund-order-789' });
+console.log(refund.id, refund.status);
 ```
 
-## Hosted Checkout
+## Hosted checkout
 
-```typescript
+`checkoutSessions.create(params)` returns a hosted payment URL. Redirect the customer to the returned `session.url`, and confirm payment through a webhook or the API rather than trusting a browser redirect.
+
+```javascript
 const session = await malipo.checkoutSessions.create({
-  amount: 25.00,
-  currency: "USD",
-  description: "Pro Subscription",
-  redirect_url: "https://your-site.com/success"
+  amount: 25,
+  currency: 'USD',
+  description: 'Premium subscription',
+  redirect_url: 'https://your-shop.example/payment-return',
+  metadata: { order_id: 'subscription-456' },
 });
 console.log(session.url);
 ```
 
-## Webhook Handler (Express)
+`amount` and `currency` are required. `description`, `redirect_url`, `metadata` and `expires_at` (ISO 8601) are optional.
 
-```typescript
-import express from "express";
-import { Malipo } from "malipo-node";
+## Transaction status and merchant balance
 
-const app = express();
-const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
+`transactions.retrieve(id)` retrieves a charge or refund. B2C statuses use `disbursements.retrieve(id)`. `balance.retrieve()` returns `available` and `pending` arrays for the key's environment.
 
-app.post("/webhooks/malipo", express.raw({ type: "application/json" }), (req, res) => {
-  const signature = req.header("x-webhook-signature") ?? "";
-  const timestamp = req.header("x-webhook-timestamp");
-  const secret = process.env.MALIPO_WEBHOOK_SECRET ?? "";
+```javascript
+const transaction = await malipo.transactions.retrieve(charge.id);
+console.log(transaction.status);
 
-  try {
-    // Keep the raw body unchanged. The SDK validates the timestamp window (5 minutes by default)
-    // and signs the timestamp plus a dot plus the raw payload when the timestamp header is present.
-    const event = malipo.webhooks.constructEvent(
-      req.body.toString(),
-      signature,
-      secret,
-      timestamp
-    );
-
-    if (event.type === "charge.succeeded") {
-      const charge = event.data.object;
-      console.log(`Payment of ${charge.amount} ${charge.currency} succeeded!`);
-    }
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.error(`Webhook Error: ${err instanceof Error ? err.message : "Invalid webhook"}`);
-    res.sendStatus(400);
-  }
-});
+const balance = await malipo.balance.retrieve();
+for (const item of balance.available) {
+  console.log(item.currency, item.amount);
+}
 ```
 
-## B2C sandbox
+Only available merchant funds can finance a B2C disbursement. For a complete funding and release example, see [B2C disbursements](/b2c/).
 
-The B2C candidate adds beneficiaries, disbursements and testing resources. See [B2C sandbox](/b2c/). Published sandbox beta: `npm install malipo-node@1.3.0-beta.1`. The stable `latest` tag remains `1.2.5`.
+## Beneficiaries
+
+Enable the key's explicit B2C write permission in **Finance → Disbursements** in the merchant portal. Existing keys do not receive it automatically.
+
+`beneficiaries.create` requires `reference`, `name`, `network` and `msisdn`. B2C networks are `ORANGE_MONEY` and `VODACOM_MPESA`. Creation registers a recipient, not a customer wallet. A beneficiary must have an approved active version before a disbursement. Sandbox approval is available through `testing.approveBeneficiary`.
+
+```javascript
+const beneficiary = await malipo.beneficiaries.create({
+  reference: 'customer-123',
+  name: 'Example recipient',
+  network: 'ORANGE_MONEY',
+  msisdn: '243840000001',
+});
+await malipo.testing.approveBeneficiary(beneficiary.id);
+
+const recipient = await malipo.beneficiaries.retrieve(beneficiary.id);
+console.log(recipient.active_version_id, recipient.versions);
+```
+
+`beneficiaries.update(id, changes)` sends a PATCH request. Changes may include `name`, `network` and `msisdn`; the client reference cannot be changed. A number change creates a pending version. After approval, it becomes effective exactly 24 UTC hours later; the old version remains active until then. Each existing disbursement keeps its original recipient snapshot.
+
+```javascript
+const updated = await malipo.beneficiaries.update(beneficiary.id, {
+  msisdn: '243840000002',
+});
+await malipo.testing.approveBeneficiary(updated.id);
+await malipo.testing.advanceTime(86400);
+await malipo.testing.screenMerchant('cleared');
+await malipo.testing.screenBeneficiary(updated.id, 'cleared');
+```
+
+Beneficiary versions expose `status`, `effective_from`, `identity_status`, `residence_status` and `masked_msisdn`. Responses mask recipient numbers. Beneficiaries and balances are isolated by sandbox key.
+
+## B2C disbursements
+
+`disbursements.create(params, { idempotencyKey })` requires an approved `beneficiary_id`, an `amount` decimal string, `currency: 'USD'` and your unique client `reference`. Fund and release the sandbox balance first using the [complete B2C example](/b2c/#complete-funding-and-withdrawal-example).
+
+```javascript
+const params = {
+  beneficiary_id: beneficiary.id,
+  amount: '20.00',
+  currency: 'USD',
+  reference: 'withdrawal-123',
+};
+const payout = await malipo.disbursements.create(params, {
+  idempotencyKey: 'withdrawal-123',
+});
+console.log(payout.id, payout.status, payout.destination.masked_msisdn);
+
+const current = await malipo.disbursements.retrieve(payout.id);
+console.log(current.status, current.next_action);
+```
+
+Save `params` and the idempotency key in your database before submission. To recover a lost response, search by the saved reference or resend the saved request with its original key:
+
+```javascript
+const found = await malipo.disbursements.list({ reference: params.reference });
+const recovered = found.data[0] ?? await malipo.disbursements.create(params, {
+  idempotencyKey: 'withdrawal-123',
+});
+console.log(recovered.id, recovered.status);
+```
+
+| Status | Meaning |
+|---|---|
+| `pending` | Funds reserved once; waiting for pickup. |
+| `processing` | Execution has started. |
+| `needs_review` | Outcome uncertain; funds remain reserved. |
+| `succeeded` | Confirmed success; no second debit. |
+| `failed` | Certain failure; reservation returned once. |
+| `cancelled` | Cancelled before pickup; reservation returned once. |
+
+### Lists and pagination
+
+Both resources accept `page` and `page_size` (maximum 100). Disbursement lists also accept `reference` and `status`. Results contain `data` and `pagination`; the SDK returns one page per call.
+
+```javascript
+const beneficiaries = await malipo.beneficiaries.list({ page: 1, page_size: 25 });
+const disbursements = await malipo.disbursements.list({
+  status: 'succeeded',
+  page: 1,
+  page_size: 25,
+});
+console.log(disbursements.data);
+console.log(disbursements.pagination); // { page, page_size, total }
+```
+
+### Cancellation
+
+Cancel before worker pickup. If execution has started, cancellation is refused; retrieve the current status. A timeout alone does not permit refunding a customer wallet or creating a replacement disbursement.
+
+```javascript
+const cancelled = await malipo.disbursements.cancel(payout.id);
+console.log(cancelled.status);
+```
+
+## Sandbox testing tools
+
+`testing.*` is available with sandbox keys on the production API and rejected for live keys. It operates only on the authenticated sandbox key's context.
+
+| Method | Arguments / purpose |
+|---|---|
+| `release()` | Release this key's pending USD into its available balance. |
+| `approveBeneficiary(id)` / `rejectBeneficiary(id)` | Approve or reject a pending beneficiary version. |
+| `reviewBeneficiary(id, versionId, review)` | `review`: `identity_status`, `residence_status` (`pending`, `approved`, `rejected`) and `proof`. |
+| `screenMerchant(status)` / `screenBeneficiary(id, status)` | Sanctions result: `cleared`, `blocked` or `unavailable`. |
+| `holdMerchant(held)` / `holdBeneficiary(id, held)` / `holdDisbursement(id, held)` | Set or clear a hold with a boolean. |
+| `setLimits(limits)` | `minimum_minor`, `maximum_minor`, `daily_minor`, `monthly_minor`; integers in USD cents. |
+| `advanceTime(seconds)` | Advance this key's business clock. |
+| `setDefaultScenario(scenario)` | Set `success`, `rejected`, `accepted` or `timeout` before creating a disbursement. |
+| `scenario(id, scenario)` | Select an outcome before worker pickup. |
+| `run()` | Process eligible jobs for this key. |
+| `result(id, status)` | Record `succeeded`, `failed` or `needs_review`, including a late result. |
+| `resolve(id, status, proof)` | Resolve to `succeeded` or `failed` with simulated evidence. |
+| `replayWebhook(id, eventType, delaySeconds?)` | Replay an existing `payout.*` event; delay defaults to zero. |
+
+Configure the scenario before creation. `accepted` stays `processing`; `timeout` becomes `needs_review`. Advancing business time does not change authentication, webhook timestamps or worker leases. Refresh merchant and beneficiary screening after a large clock advance. See [deterministic sandbox scenarios](/b2c/#deterministic-sandbox-incidents).
+
+## Webhooks
+
+Register an HTTPS endpoint and keep its signing secret on your backend. Install Express if you use the adapter below (`npm install express`). Register the raw-body route **before** `express.json()`. Require both signature headers and pass the unchanged body to `webhooks.constructEvent`; the default timestamp tolerance is five real minutes.
+
+The example imports `persistWebhook` from **your application**. Implement that function in `webhook-inbox.js` to durably store the complete event under a unique `event.id` and schedule processing in the same transaction. An already stored ID must succeed without scheduling another effect. It is not a method provided by Malipo.
+
+```javascript
+import express from 'express';
+import { Malipo } from 'malipo-node';
+import { persistWebhook } from './webhook-inbox.js';
+
+const app = express();
+const apiKey = process.env.MALIPO_SECRET_KEY;
+const endpointSecret = process.env.MALIPO_WEBHOOK_SECRET;
+if (!apiKey || !endpointSecret) throw new Error('Missing Malipo configuration');
+const malipo = new Malipo({ apiKey });
+
+app.post('/webhooks/malipo', express.raw({ type: 'application/json' }), async (req, res) => {
+  const signature = req.header('x-webhook-signature');
+  const timestamp = req.header('x-webhook-timestamp');
+  if (!signature || !timestamp) return res.sendStatus(400);
+
+  let event;
+  try {
+    event = malipo.webhooks.constructEvent(
+      req.body.toString('utf8'), signature, endpointSecret, timestamp,
+    );
+  } catch {
+    return res.sendStatus(400);
+  }
+
+  try {
+    await persistWebhook(event);
+    return res.sendStatus(200);
+  } catch {
+    return res.sendStatus(503);
+  }
+});
+
+app.use(express.json());
+app.listen(3000);
+```
+
+Your processing worker must:
+
+1. Filter the expected `environment`. For B2C, also check `data.object.payout_kind === 'b2c'` and the expected sandbox `api_key_id`: endpoint subscriptions cover the merchant.
+2. Retrieve the canonical status with `disbursements.retrieve(id)` for B2C or `transactions.retrieve(id)` for charges/refunds before applying an effect.
+3. Apply customer wallet changes atomically with durable deduplication in your database; never replace a terminal outcome with an older event.
+
+B2C events use `payout.*`. Duplicates and out-of-order delivery are possible. Return 200 only after durable event storage; return a retryable failure when storage fails. See [webhook delivery and verification](/webhooks/) and [B2C webhook handling](/b2c/#receive-durable-webhooks).
+
+## Error handling
+
+API failures throw `MalipoError`, exposing `message`, `status`, `code` and `details`. Network failures and signature verification failures can throw ordinary errors.
+
+```javascript
+import { MalipoError } from 'malipo-node';
+
+try {
+  await malipo.disbursements.create(params, { idempotencyKey: 'withdrawal-123' });
+} catch (error) {
+  if (error instanceof MalipoError) {
+    console.error(error.status, error.code, error.message);
+  } else {
+    throw error;
+  }
+}
+```
+
+HTTP 403 can indicate a missing B2C write grant; 404 covers unknown or inaccessible resources; 409 indicates a conflict. Correct a conflict rather than issuing a new withdrawal. For an uncertain network result, use the saved reference and idempotency key to recover the existing operation. Do not log secret keys, raw recipient numbers or unfiltered error details.
+
+## TypeScript
+
+The package includes ESM and CommonJS type declarations. Types are exported from `malipo-node`:
+
+```typescript
+import { Malipo } from 'malipo-node';
+import type {
+  DisbursementCreateParams,
+  MalipoDisbursement,
+  MalipoBeneficiary,
+  B2CPage,
+} from 'malipo-node';
+
+const apiKey = process.env.MALIPO_SECRET_KEY;
+if (!apiKey) throw new Error('MALIPO_SECRET_KEY is required');
+const malipo = new Malipo({ apiKey });
+const params: DisbursementCreateParams = {
+  beneficiary_id: 'beneficiary-id',
+  amount: '20.00',
+  currency: 'USD',
+  reference: 'withdrawal-123',
+};
+const payout: MalipoDisbursement = await malipo.disbursements.create(params, {
+  idempotencyKey: 'withdrawal-123',
+});
+const page: B2CPage<MalipoBeneficiary> = await malipo.beneficiaries.list();
+```
+
+Other exported types include `ChargeCreateParams`, `RefundCreateParams`, `CheckoutSessionCreateParams`, `MalipoTransaction`, `MalipoRefund`, `MalipoBalance`, `BeneficiaryCreateParams`, `DisbursementStatus`, `SandboxPayoutScenario` and `MalipoEvent`.
+
+## Related guides
+
+- [Complete B2C integration](/b2c/)
+- [API authentication](/authentication/)
+- [Idempotency](/idempotency/)
+- [SDK source and README](https://github.com/bashizip/malipo-sdks/tree/main/malipo-node)
