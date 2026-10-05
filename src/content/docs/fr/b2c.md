@@ -1,19 +1,21 @@
 ---
-title: Sandbox B2C
-description: Verser vers le Mobile Money d'un client depuis le solde marchand avec la beta publiée du SDK Node.js.
+title: Versements B2C
+description: Intégrer les versements B2C avec l’API production Malipo et le SDK Node.js officiel.
 ---
 
 Votre backend gère les wallets clients et leur comptabilité. Malipo conserve les bénéficiaires approuvés et réserve votre solde marchand disponible pour un versement ; un bénéficiaire n'a aucun wallet ni solde Malipo.
 
-:::caution[Candidat sandbox]
-L'API B2C est disponible pour la recette sur `https://api-staging.malipo.dev/v1`. Le SDK Node.js `1.3.0-beta.1` est publié sur npm sous le tag `beta`, avec une intégrité identique au tarball recetté. Installer explicitement la beta ; `latest` reste sur `1.2.5`. Le B2C live reste désactivé.
-:::
+## Disponibilité du service
+
+Utilisez l’API production `https://api.malipo.dev/v1`. Le B2C est disponible en **mode sandbox**, avec une clé serveur `sk_test_` : montants, résultats opérateur et approbations des bénéficiaires sont simulés, sans envoi d’argent réel. Le domaine API désigne le service déployé ; la clé détermine l’environnement des opérations. Les versements B2C live ne sont pas activés.
+
+La version d’intégration est `malipo-node@1.3.0-beta.1`, publiée sur npm. Installez cette version exacte pour utiliser `beneficiaries`, `disbursements` et `testing`. Le tag npm `latest` pointe actuellement sur `1.2.5`, qui ne contient pas ces ressources. Consultez la [référence du SDK Node.js](/fr/sdk/node/).
 
 ## Préparer votre serveur
 
-Utilisez une clé serveur sandbox staging dédiée commençant par `sk_test_`. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
+Créez une clé serveur sandbox dédiée dans le [portail marchand production](https://malipo.dev/api-keys), commençant par `sk_test_`. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
 
-Installez la version beta publiée sur npm, puis enregistrez l'exemple ci-dessous dans `b2c.mjs`. Il nécessite Node.js 20 ou plus ; l'outil distinct de recette webhook SQLite nécessite Node.js 24.
+Installez le SDK, puis enregistrez l’exemple complet ci-dessous dans `b2c.mjs`. Utilisez Node.js 20.6 ou plus pour la commande `--env-file`.
 
 ```bash
 npm install malipo-node@1.3.0-beta.1
@@ -33,9 +35,9 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const apiKey = process.env.MALIPO_B2C_API_KEY;
 if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_B2C_API_KEY is required');
-const client = new Malipo({ apiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
+const client = new Malipo({ apiKey }); // https://api.malipo.dev/v1
 const run = randomUUID();
-// Existing force-success sandbox phone. It is never sent to an operator.
+// Sandbox test phone: no request is sent to a real operator.
 let charge = await client.charges.create({ amount: 30, currency: 'USD', phone: '+243000000001', network: 'ORANGE_MONEY' }, { idempotencyKey: `b2c-funding-${run}` });
 for (let attempt = 0; charge.status === 'pending' && attempt < 30; attempt++) {
   await delay(1000);
@@ -83,7 +85,7 @@ Une clé ou référence identique avec le même contenu retourne l'opération ex
 | `disbursements.retrieve` | `GET /disbursements/{id}` |
 | `disbursements.cancel` | `POST /disbursements/{id}/cancel` |
 
-Filtres de liste : `reference`, `status`, `page` et `page_size` (100 maximum). La réponse contient `data` et `pagination` ; la recherche reste dans le contexte marchand/clé authentifié. Ressource inconnue ou étrangère : 404 ; permission d'écriture absente : 403.
+Les listes de versements acceptent `reference`, `status`, `page` et `page_size` (100 maximum). Les listes de bénéficiaires acceptent `page` et `page_size`. La réponse contient `data` et `pagination` ; la recherche reste dans le contexte marchand/clé authentifié. Ressource inconnue ou étrangère : 404 ; permission d'écriture absente : 403.
 
 `pending` réserve les fonds une seule fois. `processing` indique la prise en charge. `needs_review` conserve la réservation pendant l'incertitude. `succeeded` ne redébite jamais. Un échec certain `failed` ou une annulation `cancelled` restitue les fonds une seule fois. L'annulation est possible avant la prise en charge par le worker. Un timeout ne justifie pas la libération d'une réservation client.
 
@@ -113,8 +115,8 @@ Exigez `X-Webhook-Timestamp` et `X-Webhook-Signature`. Appelez `client.webhooks.
 
 Persistez chaque identifiant d'événement avec une contrainte unique et acquittez uniquement après stockage durable. Appliquez les effets sur vos wallets atomiquement avec la déduplication dans votre base. Un replay garde le même ID. Des doublons ou événements désordonnés sont possibles : rapprochez avec `disbursements.retrieve(id)` et ne remplacez jamais un état terminal par un ancien événement pending ou processing. Retournez une erreur permettant la reprise si le stockage ou la consultation échoue. Malipo effectue cinq tentatives avec backoff ; demandez un replay après épuisement.
 
-Le récepteur de recette SQLite du code source SDK candidat (`scripts/b2c-webhook-receiver.mjs`) illustre déduplication durable, reprise après redémarrage et rapprochement avec des données synthétiques. Ses tables servent à la recette ; adaptez ces contraintes au ledger de vos wallets clients.
+Consultez l’[intégration des webhooks avec Node.js](/fr/sdk/node/#webhooks) pour vérifier les signatures et conserver durablement les événements. Le stockage des événements et la comptabilité des wallets clients appartiennent à votre application.
 
-## Avant le live
+## Disponibilité du B2C live
 
-Le live nécessite une approbation et une recette opérateur distinctes : vérifications marchand/bénéficiaire, résidence, sanctions fraîches, holds, solde disponible et plafonds partagés s'appliquent. Orange Money est qualifié en premier, puis M-Pesa séparément. Un accusé de réception opérateur ne constitue pas une preuve de paiement. Cette preview ne promet aucune date live.
+Le live nécessite une approbation et une recette opérateur distinctes : vérifications marchand/bénéficiaire, résidence, sanctions fraîches, holds, solde disponible et plafonds partagés s'appliquent. Orange Money est qualifié en premier, puis M-Pesa séparément. Un accusé de réception opérateur ne constitue pas une preuve de paiement. Conservez votre intégration B2C sur des clés sandbox jusqu’à l’activation des versements live pour votre marchand par Malipo.
