@@ -50,7 +50,7 @@ export default defineConfig({
             { label: 'Pricing', slug: 'pricing' },
             { label: 'Settlements', slug: 'settlements' },
             { label: 'Payouts', slug: 'payouts' },
-            { label: 'B2C sandbox', slug: 'b2c' },
+            { label: 'B2C disbursements', slug: 'b2c' },
             { label: 'Monthly statements', slug: 'statements' },
             { label: 'Reporting', slug: 'reporting' },
             { label: 'Hosted checkout', slug: 'hosted-checkout' },
