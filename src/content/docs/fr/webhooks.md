@@ -77,7 +77,7 @@ import express from "express";
 import { Malipo } from "malipo-node";
 
 const app = express();
-const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
+const malipo = new Malipo({ apiKey: process.env.MALIPO_API_KEY });
 
 // Utilisez express.raw() pour ne pas analyser le payload avant la vérification.
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
