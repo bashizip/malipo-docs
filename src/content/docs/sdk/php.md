@@ -20,7 +20,7 @@ require 'vendor/autoload.php';
 
 use Malipo\Malipo;
 
-$malipo = new Malipo(getenv('MALIPO_SECRET_KEY'));
+$malipo = new Malipo(getenv('MALIPO_API_KEY'));
 
 try {
     $charge = $malipo->charges->create([
@@ -74,7 +74,7 @@ require 'vendor/autoload.php';
 
 use Malipo\Malipo;
 
-$malipo = new Malipo(getenv('MALIPO_SECRET_KEY'));
+$malipo = new Malipo(getenv('MALIPO_API_KEY'));
 
 $payload = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'];

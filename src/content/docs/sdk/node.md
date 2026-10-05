@@ -22,13 +22,13 @@ pnpm add malipo-node@1.3.0-beta.1
 
 ## Initialize the client
 
-Create a server API key in the [merchant portal](https://malipo.dev/api-keys) and store it in your backend environment. Never expose a secret key in browser or mobile code.
+Store your regular Malipo server API key in `MALIPO_API_KEY`. Manage it in the [merchant portal](https://malipo.dev/api-keys). The same key is used for payments and B2C; enable its B2C write permission when using disbursements. Never expose a secret key in browser or mobile code.
 
 ```javascript
 import { Malipo } from 'malipo-node';
 
-const apiKey = process.env.MALIPO_SECRET_KEY;
-if (!apiKey) throw new Error('MALIPO_SECRET_KEY is required');
+const apiKey = process.env.MALIPO_API_KEY;
+if (!apiKey) throw new Error('MALIPO_API_KEY is required');
 const malipo = new Malipo({ apiKey });
 ```
 
@@ -36,7 +36,7 @@ ES modules support both `import { Malipo }` and `import Malipo`. CommonJS is als
 
 ```javascript
 const { Malipo } = require('malipo-node');
-const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
+const malipo = new Malipo({ apiKey: process.env.MALIPO_API_KEY });
 ```
 
 | Option | Type | Behavior |
@@ -255,7 +255,7 @@ import { Malipo } from 'malipo-node';
 import { persistWebhook } from './webhook-inbox.js';
 
 const app = express();
-const apiKey = process.env.MALIPO_SECRET_KEY;
+const apiKey = process.env.MALIPO_API_KEY;
 const endpointSecret = process.env.MALIPO_WEBHOOK_SECRET;
 if (!apiKey || !endpointSecret) throw new Error('Missing Malipo configuration');
 const malipo = new Malipo({ apiKey });
@@ -327,8 +327,8 @@ import type {
   B2CPage,
 } from 'malipo-node';
 
-const apiKey = process.env.MALIPO_SECRET_KEY;
-if (!apiKey) throw new Error('MALIPO_SECRET_KEY is required');
+const apiKey = process.env.MALIPO_API_KEY;
+if (!apiKey) throw new Error('MALIPO_API_KEY is required');
 const malipo = new Malipo({ apiKey });
 const params: DisbursementCreateParams = {
   beneficiary_id: 'beneficiary-id',

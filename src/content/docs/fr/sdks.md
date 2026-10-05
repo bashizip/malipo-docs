@@ -51,7 +51,7 @@ pnpm add malipo-node@1.3.0-beta.1
 ```typescript
 import { Malipo } from "malipo-node";
 
-const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY! });
+const malipo = new Malipo({ apiKey: process.env.MALIPO_API_KEY! });
 
 const charge = await malipo.charges.create({
   amount: 30,
