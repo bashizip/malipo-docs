@@ -22,13 +22,13 @@ pnpm add malipo-node@1.3.0-beta.1
 
 ## Initialiser le client
 
-Créez une clé API serveur dans le [portail marchand](https://malipo.dev/api-keys) et conservez-la dans l’environnement de votre backend. Ne l’exposez jamais dans le navigateur ou le code d’une application mobile.
+Enregistrez votre clé API serveur Malipo habituelle dans `MALIPO_API_KEY`. Gérez-la dans le [portail marchand](https://malipo.dev/api-keys). La même clé sert aux paiements et au B2C ; activez sa permission d’écriture B2C pour utiliser les versements. Ne l’exposez jamais dans le navigateur ou le code d’une application mobile.
 
 ```javascript
 import { Malipo } from 'malipo-node';
 
-const apiKey = process.env.MALIPO_SECRET_KEY;
-if (!apiKey) throw new Error('MALIPO_SECRET_KEY is required');
+const apiKey = process.env.MALIPO_API_KEY;
+if (!apiKey) throw new Error('MALIPO_API_KEY is required');
 const malipo = new Malipo({ apiKey });
 ```
 
@@ -36,7 +36,7 @@ Les modules ES acceptent `import { Malipo }` et `import Malipo`. CommonJS est é
 
 ```javascript
 const { Malipo } = require('malipo-node');
-const malipo = new Malipo({ apiKey: process.env.MALIPO_SECRET_KEY });
+const malipo = new Malipo({ apiKey: process.env.MALIPO_API_KEY });
 ```
 
 | Option | Type | Comportement |
@@ -255,7 +255,7 @@ import { Malipo } from 'malipo-node';
 import { persistWebhook } from './webhook-inbox.js';
 
 const app = express();
-const apiKey = process.env.MALIPO_SECRET_KEY;
+const apiKey = process.env.MALIPO_API_KEY;
 const endpointSecret = process.env.MALIPO_WEBHOOK_SECRET;
 if (!apiKey || !endpointSecret) throw new Error('Missing Malipo configuration');
 const malipo = new Malipo({ apiKey });
@@ -327,8 +327,8 @@ import type {
   B2CPage,
 } from 'malipo-node';
 
-const apiKey = process.env.MALIPO_SECRET_KEY;
-if (!apiKey) throw new Error('MALIPO_SECRET_KEY is required');
+const apiKey = process.env.MALIPO_API_KEY;
+if (!apiKey) throw new Error('MALIPO_API_KEY is required');
 const malipo = new Malipo({ apiKey });
 const params: DisbursementCreateParams = {
   beneficiary_id: 'beneficiary-id',

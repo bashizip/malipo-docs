@@ -13,7 +13,7 @@ The integration version is `malipo-node@1.3.0-beta.1`, published on npm. Pin thi
 
 ## Prepare your server
 
-Create a dedicated sandbox server key in the [production merchant portal](https://malipo.dev/api-keys), beginning with `sk_test_`. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
+Use your regular Malipo server API key, stored as `MALIPO_API_KEY`. For the current B2C service, use its sandbox form (`sk_test_`), managed in the [production merchant portal](https://malipo.dev/api-keys). The same key authenticates payments, balances, beneficiaries and disbursements. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
 
 Install the SDK, then save the complete example below as `b2c.mjs`. Use Node.js 20.6 or later for the `--env-file` command.
 
@@ -22,7 +22,7 @@ npm install malipo-node@1.3.0-beta.1
 node --env-file=.env b2c.mjs
 ```
 
-Set `MALIPO_B2C_API_KEY` in your private `.env`. Never commit it. The example creates synthetic sandbox data, including a USD 30 charge and USD 20 withdrawal. Charge fees reduce the pending credit; only released funds can be withdrawn. Repeated runs create separate operations.
+Set `MALIPO_API_KEY` in your private `.env`. Never commit it. The example creates synthetic sandbox data, including a USD 30 charge and USD 20 withdrawal. Charge fees reduce the pending credit; only released funds can be withdrawn. Repeated runs create separate operations.
 
 ## Complete funding and withdrawal example
 
@@ -33,8 +33,8 @@ import Malipo from 'malipo-node';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const apiKey = process.env.MALIPO_B2C_API_KEY;
-if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_B2C_API_KEY is required');
+const apiKey = process.env.MALIPO_API_KEY;
+if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_API_KEY is required');
 const client = new Malipo({ apiKey }); // https://api.malipo.dev/v1
 const run = randomUUID();
 // Sandbox test phone: no request is sent to a real operator.
