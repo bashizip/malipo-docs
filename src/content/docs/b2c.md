@@ -121,15 +121,15 @@ See the [Node.js webhook integration](/sdk/node/#webhooks) for signature verific
 
 Live needs a separate approval and operator acceptance: merchant and beneficiary verification, residence, fresh sanctions screening, holds, available balance and shared payout limits all apply. Orange Money is qualified first, then M-Pesa separately. An operator acknowledgement is not proof of payment. Keep your B2C integration on sandbox keys until Malipo enables live disbursements for your merchant.
 
-## Remediation candidate (not yet publicly released)
+## Remediation accepted on staging (npm publication pending)
 
-A published policy is required in both environments. For the candidate sandbox, `testing.setLimits(...)` explicitly publishes simulated zero-fee policy versions and never changes live policies. Disbursements expose the frozen policy version and the action screening state.
+A published policy is required in both environments. For the remediation sandbox, `testing.setLimits(...)` explicitly publishes simulated zero-fee policy versions and never changes live policies. Disbursements expose the frozen policy version and the action screening state.
 
-The next candidate SDK, `1.3.0-beta.2`, adds separate USD/CDF balances, fee quotes and frozen total debits, stable cursor pagination, batches of at most 500 JSON/CSV rows, beneficiary archiving and screening states. The existing published `1.3.0-beta.1` integration remains the deployed reference until candidate staging acceptance and publication.
+The staging-accepted SDK, `1.3.0-beta.2`, adds separate USD/CDF balances, fee quotes and frozen total debits, stable cursor pagination, batches of at most 500 JSON/CSV rows, beneficiary archiving and screening states. The new routes passed staging acceptance on 7 October 2026. The public npm version remains `1.3.0-beta.1` until `beta.2` publication completes 2FA authentication. Existing routes remain compatible.
 
 Every new live approval, reservation and submission authorization requires a fresh favorable beneficiary screening. A historic clearance never replaces that action’s check. A service outage blocks the new action. Exact replays, reads, operator status queries and late confirmations remain available; uncertain submissions keep funds reserved.
 
-Candidate routes: `POST /v1/disbursements/quote`, `GET /v1/b2c-balance`, `POST /v1/disbursements/batches`, `GET /v1/disbursements/batches/{id}` and `POST /v1/beneficiaries/{id}/archive`. Lists accept `starting_after`, optional `include_total` and return `pagination.next_cursor`/`has_more`. Existing routes and explicit legacy `page` remain supported.
+Routes available on staging: `POST /v1/disbursements/quote`, `GET /v1/b2c-balance`, `POST /v1/disbursements/batches`, `GET /v1/disbursements/batches/{id}` and `POST /v1/beneficiaries/{id}/archive`. Lists accept `starting_after`, optional `include_total` and return `pagination.next_cursor`/`has_more`. Existing routes and explicit legacy `page` remain supported.
 
 USD uses decimal strings; CDF requires integer strings. No currency conversion occurs. Fees and total debit are fixed at reservation and completely returned on admissible cancellation or certain failure. CSV headers are `beneficiary_id,reference,amount,currency` plus optional `idempotency_key`. Batches return 202 after persistence and expose per-line results; each line has its own required screening.
 
