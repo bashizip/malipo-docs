@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "postinstall": "patch-package"
+    "postinstall": "node scripts/patch-starlight-locale.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.0",
@@ -17,6 +17,5 @@
     "sharp": "0.35.5"
   },
   "devDependencies": {
-    "patch-package": "^8.0.1"
   }
 }
