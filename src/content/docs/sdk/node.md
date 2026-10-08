@@ -6,18 +6,20 @@ description: Official Malipo Node.js and TypeScript reference for payments, B2C 
 
 The official Node.js SDK connects your backend to the Malipo production API at `https://api.malipo.dev/v1`. It supports payments, refunds, hosted checkout, balances, beneficiaries, B2C disbursements and webhook verification.
 
-This reference covers the published **`malipo-node@1.3.0-beta.1`** package. B2C is available in sandbox with `sk_test_` keys. Existing live payment services use `sk_live_` keys; live B2C disbursements are not enabled. Your backend owns customer wallets and their accounting.
+This reference covers the published **`malipo-node@1.3.0-beta.2`** package. B2C is available in sandbox with `sk_test_` keys. Existing live payment services use `sk_live_` keys; live B2C disbursements are not enabled. Your backend owns customer wallets and their accounting.
+
+The new `beta.2` B2C features (CDF, fees, batches, cursors and archival) are available at `https://api-staging.malipo.dev/v1` with dedicated staging keys. Production promotion is separate from SDK publication.
 
 ## Installation
 
 Use Node.js 20 or later. Pin the version below to include B2C resources; npm `latest` currently points to `1.2.5`, which does not include them.
 
 ```bash
-npm install malipo-node@1.3.0-beta.1
+npm install malipo-node@1.3.0-beta.2
 # Yarn
-yarn add malipo-node@1.3.0-beta.1
+yarn add malipo-node@1.3.0-beta.2
 # pnpm
-pnpm add malipo-node@1.3.0-beta.1
+pnpm add malipo-node@1.3.0-beta.2
 ```
 
 ## Initialize the client
@@ -350,3 +352,25 @@ Other exported types include `ChargeCreateParams`, `RefundCreateParams`, `Checko
 - [API authentication](/authentication/)
 - [Idempotency](/idempotency/)
 - [SDK source and README](https://github.com/bashizip/malipo-sdks/tree/main/malipo-node)
+
+## B2C beta.2 remediation
+
+The 7 October 2026 acceptance covers deployed staging routes, per-action screening, frozen fee quotes, separate USD/CDF balances, batches, cursors and archiving. Live remains subject to operator qualification and merchant/network/currency activation. See the [B2C guide](/b2c/).
+
+```typescript
+const stagingApiKey = process.env.MALIPO_STAGING_API_KEY;
+if (!stagingApiKey?.startsWith('sk_test_')) throw new Error('A staging sandbox key is required');
+const b2c = new Malipo({ apiKey: stagingApiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
+await b2c.testing.setLimits({ minimum_minor: 1, maximum_minor: 1000000, daily_minor: 5000000, monthly_minor: 100000000 });
+const quote = await b2c.disbursements.quote({ beneficiary_id, reference, amount: '1000', currency: 'CDF' });
+const balances = await b2c.disbursements.balance();
+const page = await b2c.disbursements.list({ page_size: 25, include_total: true });
+const next = page.pagination.next_cursor
+  ? await b2c.disbursements.list({ starting_after: page.pagination.next_cursor, page_size: 25 })
+  : null;
+const batch = await b2c.disbursements.createBatch(rows, { idempotencyKey: 'withdrawals-20261007' });
+const status = await b2c.disbursements.retrieveBatch(batch.id);
+await b2c.beneficiaries.archive(beneficiary_id);
+```
+
+USD uses two decimal places and CDF integer strings. Explicitly publish a policy before new sandbox requests using `testing.setLimits(...)`; batches support at most 500 lines with individual results. An archive blocks new requests and preserves existing reads/replays.
