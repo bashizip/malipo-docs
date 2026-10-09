@@ -4,7 +4,9 @@ import starlight from '@astrojs/starlight';
 import mdx from '@astrojs/mdx';
 
 export default defineConfig({
-  site: 'https://docs.malipo.dev',
+  site: process.env.VERCEL_ENV === 'preview'
+    ? 'https://docs-staging.malipo.dev'
+    : 'https://docs.malipo.dev',
   legacy: {
     collectionsBackwardsCompat: true,
   },

@@ -1,49 +1,19 @@
-# Starlight Starter Kit: Basics
+# Malipo documentation
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+English pages use unprefixed URLs; French pages live under `/fr/`. Integration guides are in `src/content/docs/`.
 
-```
-npm create astro@latest -- --template starlight
-```
+## Validation and deployment
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Make changes on `dev` or a branch targeting `dev`, then validate them on https://docs-staging.malipo.dev. Vercel tracks `dev` for this Preview domain. Preview builds use the staging domain for canonical links and sitemaps.
 
-## 🚀 Project Structure
+Production remains on `main` at https://docs.malipo.dev. Promote reviewed documentation through a `dev → main` pull request after staging acceptance; do not push new documentation directly to `main`. A staging deployment does not publish changes to the production domain.
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+GitHub Actions installs dependencies from the lockfile and builds documentation on pushes and pull requests. Vercel manages deployments separately. Keep the build check passing before promotion.
 
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+```sh
+npm ci
+VERCEL_ENV=preview npm run build
+npm run preview
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
-
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
-
-Static assets, like favicons, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+Use `VERCEL_ENV=production npm run build` to verify production canonical URLs locally. Neither build command deploys the site.

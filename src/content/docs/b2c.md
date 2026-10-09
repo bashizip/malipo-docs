@@ -1,24 +1,24 @@
 ---
 title: B2C disbursements
-description: Integrate B2C disbursements with the production Malipo API and the official Node.js SDK.
+description: Integrate the staging B2C remediation with the official Node.js SDK.
 ---
 
 Your backend owns customer wallets and their accounting. Malipo stores approved beneficiaries and reserves your available merchant balance for a disbursement; a beneficiary has no Malipo wallet or balance.
 
 ## Service availability
 
-Use the production API at `https://api.malipo.dev/v1`. B2C is available in **sandbox mode**, with a `sk_test_` server key: amounts, provider outcomes and beneficiary approvals are simulated, and no real money is sent. The API domain identifies the deployed service; the key identifies the transaction environment. Live B2C disbursements are not enabled.
+The `beta.2` remediation features are accepted on **staging**, at `https://api-staging.malipo.dev/v1`, with a staging `sk_test_` key. Amounts, provider outcomes and approvals are simulated; no real money is sent. The new CDF/fee/batch/screening contracts have not yet been promoted to the production API. Existing payment services retain `https://api.malipo.dev/v1` and their own credentials. Live B2C disbursements are not enabled.
 
-The integration version is `malipo-node@1.3.0-beta.1`, published on npm. Pin this exact version to use `beneficiaries`, `disbursements` and `testing`. The npm `latest` tag currently points to `1.2.5`, which does not include these resources. See the [Node.js SDK reference](/sdk/node/).
+The integration version is `malipo-node@1.3.0-beta.2`, published on npm. Pin this exact version to use `beneficiaries`, `disbursements` and `testing`. The npm `latest` tag currently points to `1.2.5`, which does not include these resources. See the [Node.js SDK reference](/sdk/node/).
 
 ## Prepare your server
 
-Use your regular Malipo server API key, stored as `MALIPO_API_KEY`. For the current B2C service, use its sandbox form (`sk_test_`), managed in the [production merchant portal](https://malipo.dev/api-keys). The same key authenticates payments, balances, beneficiaries and disbursements. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
+Use your regular Malipo server API key, stored as `MALIPO_API_KEY`. For this B2C acceptance, use a staging sandbox key (`sk_test_`), managed in the [staging merchant portal](https://staging.malipo.dev/api-keys). The same key authenticates payments, balances, beneficiaries and disbursements. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
 
 Install the SDK, then save the complete example below as `b2c.mjs`. Use Node.js 20.6 or later for the `--env-file` command.
 
 ```bash
-npm install malipo-node@1.3.0-beta.1
+npm install malipo-node@1.3.0-beta.2
 node --env-file=.env b2c.mjs
 ```
 
@@ -30,13 +30,15 @@ The special test phone forces a successful charge. No operator receives this san
 
 ```javascript
 import Malipo from 'malipo-node';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomInt } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const apiKey = process.env.MALIPO_API_KEY;
 if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_API_KEY is required');
-const client = new Malipo({ apiKey }); // https://api.malipo.dev/v1
+const client = new Malipo({ apiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
 const run = randomUUID();
+const testRecipientPhone = '24384' + String(randomInt(0, 10000000)).padStart(7, '0');
+await client.testing.setLimits({ minimum_minor: 1, maximum_minor: 1000000, daily_minor: 5000000, monthly_minor: 100000000 });
 // Sandbox test phone: no request is sent to a real operator.
 let charge = await client.charges.create({ amount: 30, currency: 'USD', phone: '+243000000001', network: 'ORANGE_MONEY' }, { idempotencyKey: `b2c-funding-${run}` });
 for (let attempt = 0; charge.status === 'pending' && attempt < 30; attempt++) {
@@ -46,7 +48,7 @@ for (let attempt = 0; charge.status === 'pending' && attempt < 30; attempt++) {
 if (charge.status !== 'succeeded') throw new Error(`Funding charge ${charge.id}: ${charge.status}`);
 await client.testing.release();
 await client.testing.screenMerchant('cleared');
-const beneficiary = await client.beneficiaries.create({ reference: `user-${run}`, name: 'Sandbox recipient', network: 'ORANGE_MONEY', msisdn: '243840000001' });
+const beneficiary = await client.beneficiaries.create({ reference: `user-${run}`, name: 'Sandbox recipient', network: 'ORANGE_MONEY', msisdn: testRecipientPhone });
 await client.testing.approveBeneficiary(beneficiary.id);
 const params = { beneficiary_id: beneficiary.id, amount: '20.00', currency: 'USD', reference: `withdrawal-${run}` };
 await client.testing.setDefaultScenario('timeout');
@@ -73,7 +75,7 @@ const payout = found.data[0];
 // If present, retrieve its current status; never create a replacement withdrawal.
 ```
 
-An identical key or reference and content returns the existing operation. Different content returns `409 idempotency_conflict`. Create amounts are decimal strings such as `"20.00"`, currency is `"USD"`, and idempotency is required. References and keys are at most 128 characters.
+An identical key or reference and content returns the existing operation. Different content returns `409 idempotency_conflict`. Create amounts are decimal strings such as `"20.00"` for USD or integer strings such as `"1000"` for CDF, and idempotency is required. References and keys are at most 128 characters.
 
 ## Routes and states
 
@@ -85,7 +87,7 @@ An identical key or reference and content returns the existing operation. Differ
 | `disbursements.retrieve` | `GET /disbursements/{id}` |
 | `disbursements.cancel` | `POST /disbursements/{id}/cancel` |
 
-Disbursement lists support `reference`, `status`, `page` and `page_size` (maximum 100). Beneficiary lists support `page` and `page_size`. Responses contain `data` and `pagination`; reference filters stay within the authenticated merchant/key context. Unknown or foreign resources return 404; missing write permission returns 403.
+Lists support `starting_after`, `page_size` (maximum 100) and optional `include_total`. Disbursements also accept `reference` and `status`. Explicit legacy `page` requests remain supported. Responses contain `data` and `pagination`; reference filters stay within the authenticated merchant/key context. Unknown or foreign resources return 404; missing write permission returns 403.
 
 `pending` reserves funds once. `processing` means the request was taken up. `needs_review` retains the reservation while the outcome is uncertain. `succeeded` never debits twice. Certain `failed` results or `cancelled` operations restore funds once. Cancellation succeeds only before worker pickup. Never release a customer reservation just because a request times out.
 
@@ -97,7 +99,7 @@ Disbursement lists support `reference`, `status`, `page` and `page_size` (maximu
 | Process this key's jobs now | `testing.run()` |
 | Late provider confirmation | `testing.result(id, 'succeeded')` |
 | Resolve with simulated evidence | `testing.resolve(id, 'failed', 'synthetic-proof')` |
-| Release pending USD | `testing.release()` |
+| Release pending USD/CDF | `testing.release()` |
 | Merchant or recipient hold | `testing.holdMerchant(true)` / `testing.holdBeneficiary(id, true)` |
 | Advance business time | `testing.advanceTime(86400)` |
 | Renew screening | `testing.screenMerchant('cleared')` / `testing.screenBeneficiary(id, 'cleared')` |
@@ -120,3 +122,17 @@ See the [Node.js webhook integration](/sdk/node/#webhooks) for signature verific
 ## Live B2C availability
 
 Live needs a separate approval and operator acceptance: merchant and beneficiary verification, residence, fresh sanctions screening, holds, available balance and shared payout limits all apply. Orange Money is qualified first, then M-Pesa separately. An operator acknowledgement is not proof of payment. Keep your B2C integration on sandbox keys until Malipo enables live disbursements for your merchant.
+
+## Remediation accepted on staging
+
+A published policy is required in both environments. For the remediation sandbox, `testing.setLimits(...)` explicitly publishes simulated zero-fee policy versions and never changes live policies. Disbursements expose the frozen policy version and the action screening state.
+
+The staging-accepted SDK, `1.3.0-beta.2`, adds separate USD/CDF balances, fee quotes and frozen total debits, stable cursor pagination, batches of at most 500 JSON/CSV rows, beneficiary archiving and screening states. The new routes passed staging acceptance on 7 October 2026. Version `1.3.0-beta.2` is published under the npm `beta` tag; `latest` remains `1.2.5`. Existing routes remain compatible.
+
+Every new live approval, reservation and submission authorization requires a fresh favorable beneficiary screening. A historic clearance never replaces that action’s check. A service outage blocks the new action. Exact replays, reads, operator status queries and late confirmations remain available; uncertain submissions keep funds reserved.
+
+Routes available on staging: `POST /v1/disbursements/quote`, `GET /v1/b2c-balance`, `POST /v1/disbursements/batches`, `GET /v1/disbursements/batches/{id}` and `POST /v1/beneficiaries/{id}/archive`. Lists accept `starting_after`, optional `include_total` and return `pagination.next_cursor`/`has_more`. Existing routes and explicit legacy `page` remain supported.
+
+USD uses decimal strings; CDF requires integer strings. No currency conversion occurs. Fees and total debit are fixed at reservation and completely returned on admissible cancellation or certain failure. CSV headers are `beneficiary_id,reference,amount,currency` plus optional `idempotency_key`. Batches return 202 after persistence and expose per-line results; each line has its own required screening.
+
+Archiving blocks new requests and preserves existing operations. Reads show masked numbers. The two-owner review includes KYC, residence and operator account holder evidence. Live remains disabled until real operator qualification for each merchant/network/currency combination. M-Pesa requires separate qualification.

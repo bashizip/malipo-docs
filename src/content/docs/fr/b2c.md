@@ -7,18 +7,18 @@ Votre backend gère les wallets clients et leur comptabilité. Malipo conserve l
 
 ## Disponibilité du service
 
-Utilisez l’API production `https://api.malipo.dev/v1`. Le B2C est disponible en **mode sandbox**, avec une clé serveur `sk_test_` : montants, résultats opérateur et approbations des bénéficiaires sont simulés, sans envoi d’argent réel. Le domaine API désigne le service déployé ; la clé détermine l’environnement des opérations. Les versements B2C live ne sont pas activés.
+Les fonctions de remédiation `beta.2` sont recettées sur **staging**, à `https://api-staging.malipo.dev/v1`, avec une clé staging `sk_test_`. Montants, résultats opérateur et approbations sont simulés, sans envoi d’argent réel. Les nouveaux contrats CDF/frais/lots/criblage ne sont pas encore promus sur l’API production. Les services de paiement existants conservent `https://api.malipo.dev/v1` et leurs propres clés. Les versements B2C live ne sont pas activés.
 
-La version d’intégration est `malipo-node@1.3.0-beta.1`, publiée sur npm. Installez cette version exacte pour utiliser `beneficiaries`, `disbursements` et `testing`. Le tag npm `latest` pointe actuellement sur `1.2.5`, qui ne contient pas ces ressources. Consultez la [référence du SDK Node.js](/fr/sdk/node/).
+La version d’intégration est `malipo-node@1.3.0-beta.2`, publiée sur npm. Installez cette version exacte pour utiliser `beneficiaries`, `disbursements` et `testing`. Le tag npm `latest` pointe actuellement sur `1.2.5`, qui ne contient pas ces ressources. Consultez la [référence du SDK Node.js](/fr/sdk/node/).
 
 ## Préparer votre serveur
 
-Utilisez votre clé API serveur Malipo habituelle, enregistrée dans `MALIPO_API_KEY`. Pour le service B2C actuel, utilisez sa forme sandbox (`sk_test_`), gérée dans le [portail marchand production](https://malipo.dev/api-keys). La même clé authentifie paiements, soldes, bénéficiaires et versements. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
+Utilisez votre clé API serveur Malipo habituelle, enregistrée dans `MALIPO_API_KEY`. Pour cette recette B2C, utilisez une clé staging sandbox (`sk_test_`), gérée dans le [portail marchand staging](https://staging.malipo.dev/api-keys). La même clé authentifie paiements, soldes, bénéficiaires et versements. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
 
 Installez le SDK, puis enregistrez l’exemple complet ci-dessous dans `b2c.mjs`. Utilisez Node.js 20.6 ou plus pour la commande `--env-file`.
 
 ```bash
-npm install malipo-node@1.3.0-beta.1
+npm install malipo-node@1.3.0-beta.2
 node --env-file=.env b2c.mjs
 ```
 
@@ -30,13 +30,15 @@ Le numéro spécial de test force une charge réussie ; aucun opérateur ne reç
 
 ```javascript
 import Malipo from 'malipo-node';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomInt } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const apiKey = process.env.MALIPO_API_KEY;
 if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_API_KEY is required');
-const client = new Malipo({ apiKey }); // https://api.malipo.dev/v1
+const client = new Malipo({ apiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
 const run = randomUUID();
+const testRecipientPhone = '24384' + String(randomInt(0, 10000000)).padStart(7, '0');
+await client.testing.setLimits({ minimum_minor: 1, maximum_minor: 1000000, daily_minor: 5000000, monthly_minor: 100000000 });
 // Sandbox test phone: no request is sent to a real operator.
 let charge = await client.charges.create({ amount: 30, currency: 'USD', phone: '+243000000001', network: 'ORANGE_MONEY' }, { idempotencyKey: `b2c-funding-${run}` });
 for (let attempt = 0; charge.status === 'pending' && attempt < 30; attempt++) {
@@ -46,7 +48,7 @@ for (let attempt = 0; charge.status === 'pending' && attempt < 30; attempt++) {
 if (charge.status !== 'succeeded') throw new Error(`Funding charge ${charge.id}: ${charge.status}`);
 await client.testing.release();
 await client.testing.screenMerchant('cleared');
-const beneficiary = await client.beneficiaries.create({ reference: `user-${run}`, name: 'Sandbox recipient', network: 'ORANGE_MONEY', msisdn: '243840000001' });
+const beneficiary = await client.beneficiaries.create({ reference: `user-${run}`, name: 'Sandbox recipient', network: 'ORANGE_MONEY', msisdn: testRecipientPhone });
 await client.testing.approveBeneficiary(beneficiary.id);
 const params = { beneficiary_id: beneficiary.id, amount: '20.00', currency: 'USD', reference: `withdrawal-${run}` };
 await client.testing.setDefaultScenario('timeout');
@@ -73,7 +75,7 @@ const payout = found.data[0];
 // Si présent, consulter son statut actuel ; ne pas créer un retrait de remplacement.
 ```
 
-Une clé ou référence identique avec le même contenu retourne l'opération existante. Un contenu différent retourne `409 idempotency_conflict`. Les montants sont des chaînes décimales comme `"20.00"`, la devise est `"USD"`, et l'idempotence est obligatoire. Références et clés : 128 caractères maximum.
+Une clé ou référence identique avec le même contenu retourne l'opération existante. Un contenu différent retourne `409 idempotency_conflict`. Les montants sont des chaînes décimales comme `"20.00"`, la devise est `"USD"` ou `"CDF"` (chaîne entière pour CDF), et l'idempotence est obligatoire. Références et clés : 128 caractères maximum.
 
 ## Routes et états
 
@@ -97,7 +99,7 @@ Les listes de versements acceptent `reference`, `status`, `page` et `page_size` 
 | Traiter immédiatement les jobs de la clé | `testing.run()` |
 | Confirmation prestataire tardive | `testing.result(id, 'succeeded')` |
 | Résolution avec preuve simulée | `testing.resolve(id, 'failed', 'synthetic-proof')` |
-| Libérer les USD en attente | `testing.release()` |
+| Libérer les USD/CDF en attente | `testing.release()` |
 | Hold marchand ou bénéficiaire | `testing.holdMerchant(true)` / `testing.holdBeneficiary(id, true)` |
 | Avancer l'heure métier | `testing.advanceTime(86400)` |
 | Renouveler le screening | `testing.screenMerchant('cleared')` / `testing.screenBeneficiary(id, 'cleared')` |
@@ -120,3 +122,17 @@ Consultez l’[intégration des webhooks avec Node.js](/fr/sdk/node/#webhooks) p
 ## Disponibilité du B2C live
 
 Le live nécessite une approbation et une recette opérateur distinctes : vérifications marchand/bénéficiaire, résidence, sanctions fraîches, holds, solde disponible et plafonds partagés s'appliquent. Orange Money est qualifié en premier, puis M-Pesa séparément. Un accusé de réception opérateur ne constitue pas une preuve de paiement. Conservez votre intégration B2C sur des clés sandbox jusqu’à l’activation des versements live pour votre marchand par Malipo.
+
+## Remédiation recettée sur staging
+
+Une politique publiée est obligatoire dans les deux environnements. Pour la sandbox de remédiation, `testing.setLimits(...)` publie explicitement des versions simulées à frais nuls et ne modifie jamais le live. Les versements exposent la version de politique figée et l’état du criblage de l’action.
+
+Le SDK recetté sur staging, `1.3.0-beta.2`, ajoute les soldes USD/CDF distincts, les devis et débits totaux figés avec frais, les curseurs stables, les lots JSON/CSV de 500 lignes maximum, l’archivage et les états de criblage. Les nouvelles routes ont passé la recette staging le 7 octobre 2026. La version `1.3.0-beta.2` est publiée sous le tag npm `beta` ; `latest` reste `1.2.5`. Les anciennes routes restent compatibles.
+
+Chaque nouvelle approbation live, réservation et autorisation d’envoi exige un nouveau criblage favorable du bénéficiaire. Un résultat historique ne remplace jamais le contrôle propre à l’action. Une panne bloque la nouvelle action. Replays exacts, lectures, consultations et confirmations tardives restent disponibles ; une soumission incertaine conserve les fonds réservés.
+
+Routes disponibles sur staging : `POST /v1/disbursements/quote`, `GET /v1/b2c-balance`, `POST /v1/disbursements/batches`, `GET /v1/disbursements/batches/{id}` et `POST /v1/beneficiaries/{id}/archive`. Les listes acceptent `starting_after`, `include_total` optionnel et retournent `pagination.next_cursor`/`has_more`. Les routes existantes et le paramètre historique explicite `page` restent disponibles.
+
+USD utilise des chaînes décimales ; CDF exige des chaînes entières. Aucune conversion de devise. Les frais et le débit total sont figés à la réservation et entièrement restitués sur annulation admissible ou échec certain. CSV : `beneficiary_id,reference,amount,currency`, plus `idempotency_key` facultatif. Les lots répondent 202 après persistance et exposent les résultats individuels ; chaque ligne a son propre criblage requis.
+
+L’archivage bloque les nouvelles demandes et conserve les opérations existantes. Les lectures affichent des numéros masqués. La validation à deux owners couvre KYC, résidence et preuve opérateur du titulaire. Le live reste désactivé jusqu’à qualification réelle de chaque couple marchand/réseau/devise. M-Pesa nécessite une qualification distincte.
