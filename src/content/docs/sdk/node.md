@@ -8,7 +8,7 @@ The official Node.js SDK connects your backend to the Malipo production API at `
 
 This reference covers the published **`malipo-node@1.3.0-beta.2`** package. B2C is available in sandbox with `sk_test_` keys. Existing live payment services use `sk_live_` keys; live B2C disbursements are not enabled. Your backend owns customer wallets and their accounting.
 
-The new `beta.2` B2C features (CDF, fees, batches, cursors and archival) are available at `https://api-staging.malipo.dev/v1` with dedicated staging keys. Production promotion is separate from SDK publication.
+The `beta.2` B2C features (CDF, fees, batches, cursors and archival) work with a sandbox key on `https://api.malipo.dev/v1` (keys from malipo.dev) and on `https://api-staging.malipo.dev/v1` (keys from staging.malipo.dev). A key only works with the API of the portal that issued it; see [B2C service availability](/b2c/#service-availability).
 
 ## Installation
 

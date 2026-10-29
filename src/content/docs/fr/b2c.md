@@ -7,13 +7,22 @@ Votre backend gère les wallets clients et leur comptabilité. Malipo conserve l
 
 ## Disponibilité du service
 
-Les fonctions de remédiation `beta.2` sont recettées sur **staging**, à `https://api-staging.malipo.dev/v1`, avec une clé staging `sk_test_`. Montants, résultats opérateur et approbations sont simulés, sans envoi d’argent réel. Les nouveaux contrats CDF/frais/lots/criblage ne sont pas encore promus sur l’API production. Les services de paiement existants conservent `https://api.malipo.dev/v1` et leurs propres clés. Les versements B2C live ne sont pas activés.
+Malipo exploite deux environnements distincts. Chacun a son portail marchand, ses comptes et ses clés API ; une clé ne fonctionne qu’avec l’API du portail qui l’a émise.
+
+| | Production | Staging (tests avant mise en production) |
+|---|---|---|
+| URL de base de l’API | `https://api.malipo.dev/v1` | `https://api-staging.malipo.dev/v1` |
+| Où créer les clés | [malipo.dev](https://malipo.dev/api-keys) | [staging.malipo.dev](https://staging.malipo.dev/api-keys) (compte distinct) |
+| B2C avec une clé `sk_test_` | Disponible : simulé, sans argent réel | Disponible : simulé, reçoit les nouvelles versions en premier |
+| B2C avec une clé `sk_live_` | Pas encore activé | Non utilisé |
+
+Une seule clé `sk_test_` couvre les encaissements (charges C2B) ainsi que les bénéficiaires et versements B2C de son environnement ; aucune clé B2C séparée n’est nécessaire. Une clé malipo.dev envoyée à `api-staging.malipo.dev` (ou l’inverse) est refusée avec `401 unauthorized`. Si vous intégrez déjà les paiements avec une clé sandbox malipo.dev, continuez à l’utiliser avec `https://api.malipo.dev/v1`.
 
 La version d’intégration est `malipo-node@1.3.0-beta.2`, publiée sur npm. Installez cette version exacte pour utiliser `beneficiaries`, `disbursements` et `testing`. Le tag npm `latest` pointe actuellement sur `1.2.5`, qui ne contient pas ces ressources. Consultez la [référence du SDK Node.js](/fr/sdk/node/).
 
 ## Préparer votre serveur
 
-Utilisez votre clé API serveur Malipo habituelle, enregistrée dans `MALIPO_API_KEY`. Pour cette recette B2C, utilisez une clé staging sandbox (`sk_test_`), gérée dans le [portail marchand staging](https://staging.malipo.dev/api-keys). La même clé authentifie paiements, soldes, bénéficiaires et versements. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
+Utilisez votre clé API serveur Malipo habituelle, enregistrée dans `MALIPO_API_KEY` : une clé sandbox (`sk_test_`) issue du portail de l’environnement appelé. La même clé authentifie paiements, soldes, bénéficiaires et versements. L’exemple ci-dessous utilise l’API production ; remplacez `baseUrl` par `https://api-staging.malipo.dev/v1` uniquement avec une clé staging. Activez sa permission d'écriture B2C dans le portail marchand, **Finance → Versements utilisateurs**. Les anciennes clés ne reçoivent pas automatiquement ce droit. Gardez la clé dans votre backend.
 
 Installez le SDK, puis enregistrez l’exemple complet ci-dessous dans `b2c.mjs`. Utilisez Node.js 20.6 ou plus pour la commande `--env-file`.
 
@@ -35,7 +44,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const apiKey = process.env.MALIPO_API_KEY;
 if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_API_KEY is required');
-const client = new Malipo({ apiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
+const client = new Malipo({ apiKey, baseUrl: 'https://api.malipo.dev/v1' });
 const run = randomUUID();
 const testRecipientPhone = '24384' + String(randomInt(0, 10000000)).padStart(7, '0');
 await client.testing.setLimits({ minimum_minor: 1, maximum_minor: 1000000, daily_minor: 5000000, monthly_minor: 100000000 });
@@ -102,10 +111,10 @@ Les listes de versements acceptent `reference`, `status`, `page` et `page_size` 
 | Libérer les USD/CDF en attente | `testing.release()` |
 | Hold marchand ou bénéficiaire | `testing.holdMerchant(true)` / `testing.holdBeneficiary(id, true)` |
 | Avancer l'heure métier | `testing.advanceTime(86400)` |
-| Renouveler le screening | `testing.screenMerchant('cleared')` / `testing.screenBeneficiary(id, 'cleared')` |
+| Simuler un résultat de criblage | `testing.screenMerchant('cleared' \| 'blocked')` / `testing.screenBeneficiary(id, 'cleared' \| 'blocked')` |
 | Rejouer un événement existant | `testing.replayWebhook(id, 'payout.succeeded')` |
 
-Configurez le scénario par défaut **avant** de créer un versement. `accepted` reste processing ; `timeout` devient needs_review. Un changement de numéro crée une version en attente ; après approbation, elle devient active exactement 24 heures UTC plus tard. L'ancienne version reste active jusque-là et chaque versement conserve son destinataire figé. Renouvelez le screening après avoir avancé le temps. L'heure métier ne modifie ni l'authentification, ni les signatures, ni les leases workers.
+Configurez le scénario par défaut **avant** de créer un versement. `accepted` reste processing ; `timeout` devient needs_review. Un changement de numéro crée une version en attente ; après approbation, elle devient active exactement 24 heures UTC plus tard. L'ancienne version reste active jusque-là et chaque versement conserve son destinataire figé. `sanctions_blocked` sur un versement sandbox signifie que le criblage marchand simulé est bloqué, en hold ou date de plus de 24 heures ; appelez `testing.screenMerchant('cleared')` puis réessayez. Malipo supprime cette expiration de 24 heures, car le criblage est une revue de conformité manuelle qui n’expire plus d’elle-même. L'heure métier ne modifie ni l'authentification, ni les signatures, ni les leases workers.
 
 Soldes, bénéficiaires, plafonds, jobs et événements sont isolés par clé sandbox. `/testing/*` refuse les clés live. La sandbox simule Orange Money et M-Pesa en USD ; CDF, Airtel et les autres SDK restent hors périmètre.
 

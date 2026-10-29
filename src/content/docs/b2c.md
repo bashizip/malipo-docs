@@ -7,13 +7,22 @@ Your backend owns customer wallets and their accounting. Malipo stores approved 
 
 ## Service availability
 
-The `beta.2` remediation features are accepted on **staging**, at `https://api-staging.malipo.dev/v1`, with a staging `sk_test_` key. Amounts, provider outcomes and approvals are simulated; no real money is sent. The new CDF/fee/batch/screening contracts have not yet been promoted to the production API. Existing payment services retain `https://api.malipo.dev/v1` and their own credentials. Live B2C disbursements are not enabled.
+Malipo runs two separate environments. Each has its own merchant portal, accounts and API keys, and a key only works against the API of the portal that issued it.
+
+| | Production | Staging (pre-release testing) |
+|---|---|---|
+| API base URL | `https://api.malipo.dev/v1` | `https://api-staging.malipo.dev/v1` |
+| Where to create keys | [malipo.dev](https://malipo.dev/api-keys) | [staging.malipo.dev](https://staging.malipo.dev/api-keys) (separate account) |
+| B2C with an `sk_test_` key | Available: simulated, no real money | Available: simulated, receives new versions first |
+| B2C with an `sk_live_` key | Not enabled yet | Not used |
+
+One `sk_test_` key covers both collections (C2B charges) and B2C beneficiaries and disbursements in its environment; you do not need a separate B2C key. A malipo.dev key sent to `api-staging.malipo.dev` (or the reverse) is rejected with `401 unauthorized`. If you already integrate payments with a malipo.dev sandbox key, keep using it with `https://api.malipo.dev/v1`.
 
 The integration version is `malipo-node@1.3.0-beta.2`, published on npm. Pin this exact version to use `beneficiaries`, `disbursements` and `testing`. The npm `latest` tag currently points to `1.2.5`, which does not include these resources. See the [Node.js SDK reference](/sdk/node/).
 
 ## Prepare your server
 
-Use your regular Malipo server API key, stored as `MALIPO_API_KEY`. For this B2C acceptance, use a staging sandbox key (`sk_test_`), managed in the [staging merchant portal](https://staging.malipo.dev/api-keys). The same key authenticates payments, balances, beneficiaries and disbursements. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
+Use your regular Malipo server API key, stored as `MALIPO_API_KEY`: a sandbox key (`sk_test_`) from the portal of the environment you call. The same key authenticates payments, balances, beneficiaries and disbursements. The example below uses the production API; replace `baseUrl` with `https://api-staging.malipo.dev/v1` only with a staging key. Enable its B2C write permission in the merchant portal under **Finance → Disbursements**. Existing keys do not gain this permission automatically. Keep the key on your backend.
 
 Install the SDK, then save the complete example below as `b2c.mjs`. Use Node.js 20.6 or later for the `--env-file` command.
 
@@ -35,7 +44,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const apiKey = process.env.MALIPO_API_KEY;
 if (!apiKey?.startsWith('sk_test_')) throw new Error('A sandbox MALIPO_API_KEY is required');
-const client = new Malipo({ apiKey, baseUrl: 'https://api-staging.malipo.dev/v1' });
+const client = new Malipo({ apiKey, baseUrl: 'https://api.malipo.dev/v1' });
 const run = randomUUID();
 const testRecipientPhone = '24384' + String(randomInt(0, 10000000)).padStart(7, '0');
 await client.testing.setLimits({ minimum_minor: 1, maximum_minor: 1000000, daily_minor: 5000000, monthly_minor: 100000000 });
@@ -102,10 +111,10 @@ Lists support `starting_after`, `page_size` (maximum 100) and optional `include_
 | Release pending USD/CDF | `testing.release()` |
 | Merchant or recipient hold | `testing.holdMerchant(true)` / `testing.holdBeneficiary(id, true)` |
 | Advance business time | `testing.advanceTime(86400)` |
-| Renew screening | `testing.screenMerchant('cleared')` / `testing.screenBeneficiary(id, 'cleared')` |
+| Simulate a screening outcome | `testing.screenMerchant('cleared' \| 'blocked')` / `testing.screenBeneficiary(id, 'cleared' \| 'blocked')` |
 | Replay an existing event | `testing.replayWebhook(id, 'payout.succeeded')` |
 
-Configure the default scenario **before** creating a withdrawal. `accepted` stays processing; `timeout` becomes needs_review. A number change creates a pending beneficiary version; after approval it activates exactly 24 UTC hours later. The old version stays active until then, and existing withdrawals retain their recipient snapshot. Refresh screening after advancing time. Business time does not change authentication, webhook timestamps or worker leases.
+Configure the default scenario **before** creating a withdrawal. `accepted` stays processing; `timeout` becomes needs_review. A number change creates a pending beneficiary version; after approval it activates exactly 24 UTC hours later. The old version stays active until then, and existing withdrawals retain their recipient snapshot. `sanctions_blocked` on a sandbox disbursement means the simulated merchant screen is blocked, held, or older than 24 hours; call `testing.screenMerchant('cleared')` and retry. Malipo is removing the 24-hour expiry, since screening is a manual compliance review and no longer expires on its own. Business time does not change authentication, webhook timestamps or worker leases.
 
 Balances, beneficiaries, limits, jobs and events are isolated by sandbox key. `/testing/*` rejects live keys. Sandbox supports Orange Money and M-Pesa simulation in USD; CDF, Airtel and other SDKs are outside this release.
 
