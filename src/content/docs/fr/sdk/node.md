@@ -8,7 +8,7 @@ Le SDK Node.js officiel connecte votre backend à l’API production Malipo `htt
 
 Cette référence couvre le paquet publié **`malipo-node@1.3.0-beta.2`**. Le B2C est disponible en sandbox avec les clés `sk_test_`. Les services de paiement live existants utilisent les clés `sk_live_` ; les versements B2C live ne sont pas activés. Votre backend gère les wallets clients et leur comptabilité.
 
-Les nouvelles fonctions B2C `beta.2` (CDF, frais, lots, curseurs et archivage) sont disponibles sur `https://api-staging.malipo.dev/v1` avec des clés staging dédiées. Leur promotion sur production reste séparée de la publication du SDK.
+Les fonctions B2C `beta.2` (CDF, frais, lots, curseurs et archivage) fonctionnent avec une clé sandbox sur `https://api.malipo.dev/v1` (clés malipo.dev) et sur `https://api-staging.malipo.dev/v1` (clés staging.malipo.dev). Une clé ne fonctionne qu’avec l’API du portail qui l’a émise ; voir [la disponibilité du service B2C](/fr/b2c/#disponibilité-du-service).
 
 ## Installation
 
